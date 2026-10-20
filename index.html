@@ -37,6 +37,12 @@ h1{font-size:18px;font-weight:700;letter-spacing:-.01em;margin-right:auto;white-
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 #speedHud .v{font-size:34px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.05}
 #speedHud .u{font-size:16px;color:var(--mut)}
+#lensBadge{display:inline-block;margin-top:5px;font-size:16px;font-weight:700;padding:3px 8px;border-radius:7px;background:#0f2a36;color:var(--acc)}
+#lensBadge.tele{background:#3a2a05;color:var(--warn)}
+#toast{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);font-size:20px;font-weight:800;padding:10px 16px;border-radius:12px;
+  background:rgba(8,10,13,.75);opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+#toast.show{opacity:1}
+.row select{width:100%;height:44px;border-radius:10px;background:#0b0d10;border:1px solid var(--line);color:var(--txt);font-size:16px;padding:0 10px}
 
 #sceneWrap{position:relative;flex:1 1 44%;min-height:0;margin:8px 10px 0;border-radius:14px;overflow:hidden;background:#0e1116;border:1px solid var(--line)}
 #glCv{position:absolute;inset:0;width:100%;height:100%;display:block}
@@ -105,7 +111,8 @@ h1{font-size:18px;font-weight:700;letter-spacing:-.01em;margin-right:auto;white-
   <section id="camWrap">
     <video id="video" playsinline muted autoplay></video>
     <canvas id="ovCv"></canvas>
-    <div id="speedHud"><div class="v" id="spdV">--</div><div class="u">km/h</div></div>
+    <div id="speedHud"><div class="v" id="spdV">--</div><div class="u">km/h</div><div id="lensBadge">1× 광각</div></div>
+    <div id="toast"></div>
     <div id="camStatus">대기 중</div>
   </section>
 
@@ -116,8 +123,8 @@ h1{font-size:18px;font-weight:700;letter-spacing:-.01em;margin-right:auto;white-
 
   <nav id="dock">
     <button id="runBtn">정지</button>
+    <button id="lensBtn">렌즈: 자동</button>
     <button id="viewBtn">시점: 뒤</button>
-    <button id="envBtn">환경 3D</button>
     <button id="setBtn">설정</button>
   </nav>
 </div>
@@ -148,6 +155,11 @@ h1{font-size:18px;font-weight:700;letter-spacing:-.01em;margin-right:auto;white-
   <div class="row"><label>보닛 길이 (폰 → 앞범퍼) <span id="bonnetV"></span></label><input type="range" id="bonnet" min="0.5" max="3.5" step="0.1"></div>
   <div class="row"><label>카메라 화각 (긴 변) <span id="fovV"></span></label><input type="range" id="fov" min="50" max="95" step="1"><div class="hint">거리가 실제보다 가깝게 나오면 값을 줄이세요.</div></div>
   <div class="row"><label>수평 보정 <span id="pitchOffV"></span></label><input type="range" id="pitchOff" min="-10" max="10" step="0.5"><div class="hint">화면의 점선 수평선이 실제 지평선과 맞도록 조정하세요.</div></div>
+  <h4>렌즈 · 원거리</h4>
+  <div class="row"><label>망원 배율 <span id="teleZoomV"></span></label><input type="range" id="teleZoom" min="2" max="5" step="0.5"><div class="hint">갤럭시 Z 폴드8 울트라의 광학 망원은 3배입니다. 3배 이상에서 망원 렌즈로 전환됩니다.</div></div>
+  <div class="row"><label>망원 자동 전환 속도 <span id="teleKmhV"></span></label><input type="range" id="teleKmh" min="30" max="90" step="5"><div class="hint">렌즈 '자동'일 때 이 속도 이상으로 3초 달리면 망원, 10km/h 아래로 내려가면 광각으로 돌아갑니다.</div></div>
+  <div class="row"><label>카메라 선택</label><select id="camSel"><option value="">자동 (기본 후면)</option></select><div class="hint">보통 '자동'이 맞습니다. 특정 렌즈를 직접 고르면 화각 값도 그 렌즈에 맞춰 주세요.</div></div>
+  <div class="tog">환경 3D 재구성 (깊이 추정)<input type="checkbox" id="env"></div>
   <h4>속도</h4>
   <div class="row"><label>테스트 속도 (GPS 대신) <span id="testSpdV"></span></label><input type="range" id="testSpd" min="0" max="100" step="5"><div class="hint">0이면 GPS 속도를 씁니다. 정차 상태에서 동작을 확인할 때만 쓰세요.</div></div>
   <h4>알림</h4>
@@ -177,20 +189,22 @@ const PRI = {
 const CLASSES = Object.keys(PRI);
 
 /* ───────── 설정 ───────── */
-const DEF = { warnT: 2.4, laneW: 2.6, camH: 1.25, bonnet: 1.8, fov: 70, pitchOff: 0, testSpd: 0, sound: true, voice: true, vibe: true, env: false };
+const DEF = { warnT: 2.4, laneW: 2.6, camH: 1.25, bonnet: 1.8, fov: 70, pitchOff: 0, testSpd: 0, sound: true, voice: true, vibe: true, env: false,
+  lensMode: 'auto', teleZoom: 3, teleKmh: 55, camId: '' };
 const S = Object.assign({}, DEF);
 try { Object.assign(S, JSON.parse(localStorage.getItem('carsafety3d') || '{}')); } catch (e) {}
 function saveS() { try { localStorage.setItem('carsafety3d', JSON.stringify(S)); } catch (e) {} }
 const fmt = {
   warnT: v => (+v).toFixed(1) + ' 초', laneW: v => (+v).toFixed(1) + ' m', camH: v => (+v).toFixed(2) + ' m',
   bonnet: v => (+v).toFixed(1) + ' m', fov: v => v + '°', pitchOff: v => (+v > 0 ? '+' : '') + (+v).toFixed(1) + '°',
-  testSpd: v => +v ? v + ' km/h' : '끔'
+  testSpd: v => +v ? v + ' km/h' : '끔', teleZoom: v => (+v).toFixed(1) + '×', teleKmh: v => v + ' km/h'
 };
 for (const k of Object.keys(fmt)) {
   const el = $('#' + k); el.value = S[k]; $('#' + k + 'V').textContent = fmt[k](S[k]);
   el.addEventListener('input', () => { S[k] = +el.value; $('#' + k + 'V').textContent = fmt[k](S[k]); saveS(); });
 }
-for (const k of ['sound', 'voice', 'vibe']) { const el = $('#' + k); el.checked = S[k]; el.addEventListener('change', () => { S[k] = el.checked; saveS(); }); }
+for (const k of ['sound', 'voice', 'vibe', 'env']) { const el = $('#' + k); el.checked = S[k]; el.addEventListener('change', () => { S[k] = el.checked; saveS(); if (k === 'env') onEnvToggle(); }); }
+$('#teleZoom').addEventListener('change', () => { if (lens === 'tele') applyZoom(S.teleZoom).then(resetScene); });
 $('#setBtn').onclick = () => $('#sheet').classList.add('open');
 $('#sheetClose').onclick = () => $('#sheet').classList.remove('open');
 
@@ -199,6 +213,8 @@ const video = $('#video');
 let running = false, stream = null, detector = null, worker = null, workerReady = false, workerBusy = false;
 let lastVT = -1, lastDetT = 0, detFps = 0, depthMs = 0, depthDevice = '', modelMsg = '';
 let wakeLock = null, audioCtx = null, geoWatch = null;
+// 렌즈 상태: 하드웨어 줌(3× 이상이면 폰이 망원 렌즈로 전환) — 지원 안 되면 중앙 확대 감지로 대체
+let vtrack = null, zoomCap = null, hwZoom = 1, lens = 'wide', lensHi = 0, lensLo = 0, lensBusy = false, detectorImg = null;
 const tracks = []; let nextId = 1;
 function status(t) { $('#camStatus').textContent = t; }
 
@@ -253,7 +269,9 @@ function onMotion(e) {
 }
 
 /* ───────── 카메라 기하 ───────── */
-function focal(vw, vh) { return (Math.max(vw, vh) / 2) / Math.tan(S.fov * DEG / 2); }
+// 줌 배율만큼 화각이 좁아진 실제 화각으로 초점거리(px) 계산
+function fovEff() { return 2 * Math.atan(Math.tan(S.fov * DEG / 2) / Math.max(1, hwZoom)); }
+function focal(vw, vh) { return (Math.max(vw, vh) / 2) / Math.tan(fovEff() / 2); }
 
 // 거리 추정: ① 바닥 접점(카메라 높이·기울기) ② 클래스 높이 ③ 뒷모습 폭 — 가중 평균
 function measure(bb, cls, vw, vh, f) {
@@ -263,12 +281,13 @@ function measure(bb, cls, vw, vh, f) {
   let zs = 0, ws = 0;
   if (!botCut && sens.ok) {
     const ang = sens.pitch + Math.atan((bb.y + bb.h - cy) / f);
-    if (ang > 0.008) { const d = S.camH / Math.tan(ang); if (d < 120) { const w = ang > 0.03 ? 2 : 1; zs += d * w; ws += w; } }
+    // 원거리(바닥 각도 1° 미만)는 차체 흔들림 오차가 커서 크기 기반 추정을 우선
+    if (ang > 0.004) { const d = S.camH / Math.tan(ang); if (d < 220) { const w = ang > 0.05 ? 2 : ang > 0.017 ? 1 : 0.3; zs += d * w; ws += w; } }
   }
   if (!topCut && !botCut) { zs += P.h * f / bb.h; ws += 1; }
   if (!sideCut && (P.grp !== 'veh' || bb.w / bb.h < 1.7)) { zs += P.w * f / bb.w * 0.4; ws += 0.4; }
   if (!ws) { zs = P.w * f / bb.w; ws = 1; }
-  const Z = clamp(zs / ws, 0.5, 120);
+  const Z = clamp(zs / ws, 0.5, 200);
   const X = ((bb.x + bb.w / 2) - cx) * Z / f;
   return { bb, cls, X, Z };
 }
@@ -298,7 +317,8 @@ function updateTracks(dets, t) {
     ut.add(i); ud.add(j);
     const tr = tracks[i], d = dets[j], dt = Math.max(0.03, tr.dt);
     const young = tr.hits < 4;
-    const aX = 0.5, bX = 0.12, aZ = young ? 0.8 : 0.3, bZ = young ? 0.25 : 0.07;
+    const far = tr.Z > 40;  // 원거리는 측정 잡음이 커서 더 부드럽게
+    const aX = 0.5, bX = 0.12, aZ = young ? 0.8 : far ? 0.2 : 0.3, bZ = young ? 0.25 : far ? 0.04 : 0.07;
     const rX = d.X - tr.pX, rZ = d.Z - tr.pZ;
     tr.X = tr.pX + aX * rX; tr.vX = clamp(tr.vX + bX * rX / dt, -8, 8);
     tr.Z = tr.pZ + aZ * rZ; tr.vZ = clamp(tr.vZ + bZ * rZ / dt, -45, 25);
@@ -341,6 +361,8 @@ function assess(tr) {
     } else if (P.grp !== 'veh' && tr.Z < 20 && Math.abs(tr.X) < half + 2.5) level = 1; // 진로 옆 보행자·자전거
     // 정체 구간(저속)에서 앞차 경고 남발 방지
     if (P.grp === 'veh' && v != null && v < 2.5 && level === 2 && ttc > 1.0) level = 1;
+    // 40m 밖은 충분히 오래 추적된 뒤에만 빨간 경고 (원거리 오차 ±10~20%)
+    if (tr.Z > 40 && tr.hits < 8 && level === 2) level = 1;
   }
   tr.level = level; tr.ttc = ttc; tr.aReq = aReq; tr.dist = gap; tr.inPath = inPath;
 }
@@ -424,6 +446,12 @@ function drawOverlay() {
   }
 
   octx.font = '700 16px -apple-system,"Noto Sans KR",sans-serif'; octx.textBaseline = 'top';
+  // 원거리 확대 감지 영역
+  if (cropRect) {
+    const [rx, ry] = P(cropRect.x, cropRect.y), rs = cropRect.s * m.s;
+    octx.setLineDash([4, 6]); octx.strokeStyle = 'rgba(255,255,255,.35)'; octx.lineWidth = 1; octx.strokeRect(rx, ry, rs, rs); octx.setLineDash([]);
+    octx.fillStyle = 'rgba(255,255,255,.6)'; octx.fillText('원거리', rx + 4, ry + 4);
+  }
   for (const tr of tracks) {
     if (tr.hits < 3) continue;
     const [x, y] = P(tr.bb.x, tr.bb.y), w = tr.bb.w * m.s, hh = tr.bb.h * m.s, c = LC[tr.level];
@@ -440,11 +468,11 @@ const glCv = $('#glCv');
 const renderer = new THREE.WebGLRenderer({ canvas: glCv, antialias: true });
 renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0e1116); scene.fog = new THREE.Fog(0x0e1116, 40, 90);
+scene.background = new THREE.Color(0x0e1116); scene.fog = new THREE.Fog(0x0e1116, 60, 150);
 const cam3 = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
 scene.add(new THREE.HemisphereLight(0xcfe8ff, 0x1a1f26, 1.1));
 const sun = new THREE.DirectionalLight(0xffffff, 0.9); sun.position.set(10, 20, 8); scene.add(sun);
-const grid = new THREE.GridHelper(120, 24, 0x334050, 0x1a2129); grid.position.z = -50; scene.add(grid);
+const grid = new THREE.GridHelper(160, 32, 0x334050, 0x1a2129); grid.position.z = -70; scene.add(grid);
 // 진로 띠
 const laneMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.12, side: THREE.DoubleSide });
 const lane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), laneMat); lane.rotation.x = -Math.PI / 2; lane.position.y = 0.02; scene.add(lane);
@@ -507,12 +535,14 @@ $('#viewBtn').onclick = () => { view = view === 'chase' ? 'top' : 'chase'; $('#v
 function render3D() {
   const wrap = $('#sceneWrap'), W = wrap.clientWidth, H = wrap.clientHeight;
   if (W && H && (glCv.width !== Math.round(W * renderer.getPixelRatio()) || glCv.height !== Math.round(H * renderer.getPixelRatio()))) { renderer.setSize(W, H, false); cam3.aspect = W / H; cam3.updateProjectionMatrix(); }
-  if (view === 'chase') { cam3.up.set(0, 1, 0); cam3.position.lerp(new THREE.Vector3(0, 9, 11), 0.15); cam3.lookAt(0, 0, -22); }
-  else { cam3.up.set(0, 0, -1); cam3.position.lerp(new THREE.Vector3(0, 55, -24), 0.15); cam3.lookAt(0, 0, -24); }
+  // 망원일 때는 더 멀리까지 보이도록 카메라를 끌어올림
+  const tele = lens === 'tele', look = tele ? -50 : -22;
+  if (view === 'chase') { cam3.up.set(0, 1, 0); cam3.position.lerp(new THREE.Vector3(0, tele ? 16 : 9, tele ? 14 : 11), 0.1); cam3.lookAt(0, 0, look); }
+  else { cam3.up.set(0, 0, -1); cam3.position.lerp(new THREE.Vector3(0, tele ? 115 : 55, look - 2), 0.1); cam3.lookAt(0, 0, look - 2); }
 
   // 내 차: 폰(원점) 앞으로 보닛, 뒤로 3m
   const carLen = S.bonnet + 3; egoCar.scale.z = carLen; egoCar.position.set(0, 0.7, (3 - S.bonnet) / 2);
-  const v = ego() || 0, R = S.laneW / 2, far = 80;
+  const v = ego() || 0, R = S.laneW / 2, far = tele ? 130 : 80;
   lane.scale.set(S.laneW, far - S.bonnet, 1); lane.position.z = -(S.bonnet + far) / 2;
   const e = edgeGeo.attributes.position;
   e.setXYZ(0, -R, 0.03, -S.bonnet); e.setXYZ(1, -R, 0.03, -far); e.setXYZ(2, R, 0.03, -S.bonnet); e.setXYZ(3, R, 0.03, -far); e.needsUpdate = true;
@@ -596,7 +626,7 @@ function maybeSendDepth(now) {
   if (fCv.width !== w || fCv.height !== h) { fCv.width = w; fCv.height = h; }
   fCtx.drawImage(video, 0, 0, w, h);
   const id = fCtx.getImageData(0, 0, w, h);
-  sentFrame = { w, h, px: new Uint8ClampedArray(id.data), pitch: sens.pitch, vw, vh };
+  sentFrame = { w, h, px: new Uint8ClampedArray(id.data), pitch: sens.pitch, vw, vh, f: focal(vw, vh) };
   workerBusy = true; lastSend = now;
   worker.postMessage({ type: 'frame', w, h, buf: id.data.buffer }, [id.data.buffer]);
 }
@@ -619,14 +649,14 @@ function onDepth(m) {
     const d = sampleMedian(data, W, H, (b.x + b.w * 0.3) * s, (b.y + b.h * 0.3) * s, (b.x + b.w * 0.7) * s, (b.y + b.h * 0.7) * s);
     if (d > 0) { const kObs = tr.Z * d; if (kObs / depthK > 0.4 && kObs / depthK < 2.5) depthK = depthK * 0.85 + kObs * 0.15; }
   }
-  const f = focal(fr.vw, fr.vh) * (W / fr.vw), p = fr.pitch, cp = Math.cos(p), sp = Math.sin(p);
+  const f = fr.f * (W / fr.vw), p = fr.pitch, cp = Math.cos(p), sp = Math.sin(p);
   const GH = Math.min(Math.round(GW * H / W), Math.floor(MAXP / GW));
   const pos = cloudGeo.attributes.position.array, col = cloudGeo.attributes.color.array;
   let n = 0;
   for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) {
     const u = (i + 0.5) * W / GW, v = (j + 0.5) * H / GH;
     const d = data[Math.floor(v) * W + Math.floor(u)]; if (!(d > 0)) continue;
-    const Z = depthK / d; if (Z < 1 || Z > 45) continue;
+    const Z = depthK / d; if (Z < 1 || Z > (lens === 'tele' ? 90 : 45)) continue;
     const Xc = (u - W / 2) * Z / f, Yc = -(v - H / 2) * Z / f;
     const yw = S.camH + Yc * cp - Z * sp, fw = Z * cp + Yc * sp;
     if (yw > 8 || yw < -0.5 || fw < 1) continue;
@@ -638,12 +668,11 @@ function onDepth(m) {
   cloudGeo.setDrawRange(0, n);
   cloudGeo.attributes.position.needsUpdate = true; cloudGeo.attributes.color.needsUpdate = true;
 }
-$('#envBtn').onclick = () => {
-  S.env = !S.env; saveS(); $('#envBtn').classList.toggle('on', S.env);
+function onEnvToggle() {
   cloud.visible = S.env;
   if (S.env && !worker && running) initWorker();
-};
-$('#envBtn').classList.toggle('on', S.env); cloud.visible = S.env;
+}
+cloud.visible = S.env;
 
 /* ───────── 물체 감지기 ───────── */
 async function initDetector() {
@@ -653,9 +682,113 @@ async function initDetector() {
     baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float16/1/efficientdet_lite0.tflite', delegate: d },
     runningMode: 'VIDEO', scoreThreshold: 0.35, maxResults: 16, categoryAllowlist: CLASSES
   });
+  let delegate = 'GPU';
   try { detector = await ObjectDetector.createFromOptions(vision, opts('GPU')); }
-  catch (e) { detector = await ObjectDetector.createFromOptions(vision, opts('CPU')); }
+  catch (e) { delegate = 'CPU'; detector = await ObjectDetector.createFromOptions(vision, opts('CPU')); }
+  // 원거리 확대 영역 전용 (이미지 모드)
+  try { detectorImg = await ObjectDetector.createFromOptions(vision, { ...opts(delegate), runningMode: 'IMAGE', scoreThreshold: 0.4 }); }
+  catch (e) { detectorImg = null; }
 }
+
+/* ───────── 원거리 확대 감지 ─────────
+   영상을 통째로 줄이면 먼 물체가 몇 px로 뭉개진다.
+   수평선 주변(먼 물체가 있는 곳)을 원본 해상도로 잘라 한 번 더 감지한다. */
+const cropCv = document.createElement('canvas'), cropCtx = cropCv.getContext('2d');
+let cropRect = null, cropTurn = false;
+function cropRegion(vw, vh, f) {
+  const swTele = lens === 'tele' && hwZoom < 1.5;      // 하드웨어 줌이 없으면 더 좁게 잘라 대신함
+  const side = Math.round(Math.min(vw, vh) * (swTele ? 0.34 : 0.6));
+  const yh = sens.ok ? vh / 2 - f * Math.tan(sens.pitch) : vh / 2;
+  return { x: Math.round(vw / 2 - side / 2), y: Math.round(clamp(yh - side * 0.45, 0, vh - side)), s: side };
+}
+function detectCrop(vw, vh, f) {
+  const r = cropRegion(vw, vh, f); cropRect = r;
+  if (cropCv.width !== r.s) { cropCv.width = cropCv.height = r.s; }
+  cropCtx.drawImage(video, r.x, r.y, r.s, r.s, 0, 0, r.s, r.s);
+  let res = null; try { res = detectorImg.detect(cropCv); } catch (e) {}
+  const out = []; if (!res) return out;
+  for (const d of res.detections) {
+    const b = d.boundingBox, cls = d.categories && d.categories[0] && d.categories[0].categoryName;
+    if (!b || !PRI[cls]) continue;
+    // 확대 영역 가장자리에 잘린 물체는 전체 감지에 맡김
+    if (b.originX < 2 || b.originY < 2 || b.originX + b.width > r.s - 2 || b.originY + b.height > r.s - 2) continue;
+    out.push({ x: b.originX + r.x, y: b.originY + r.y, w: b.width, h: b.height, cls });
+  }
+  return out;
+}
+function iou(a, b) {
+  const x0 = Math.max(a.x, b.x), y0 = Math.max(a.y, b.y), x1 = Math.min(a.x + a.w, b.x + b.w), y1 = Math.min(a.y + a.h, b.y + b.h);
+  const i = Math.max(0, x1 - x0) * Math.max(0, y1 - y0); return i / (a.w * a.h + b.w * b.h - i || 1);
+}
+
+/* ───────── 카메라 · 렌즈 ───────── */
+async function openCamera() {
+  const base = { width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } };
+  const v = S.camId ? { ...base, deviceId: { exact: S.camId } } : { ...base, facingMode: { ideal: 'environment' } };
+  // zoom:true 를 요청해야 크롬이 하드웨어 줌(렌즈 전환) 제어를 허용
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { ...v, zoom: true } }); }
+  catch (e) { stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: v }); }
+  vtrack = stream.getVideoTracks()[0];
+  let caps = {}; try { caps = vtrack.getCapabilities ? vtrack.getCapabilities() : {}; } catch (e) {}
+  zoomCap = caps.zoom && caps.zoom.max > 1.4 ? caps.zoom : null;
+  video.srcObject = stream; await video.play().catch(() => {});
+  hwZoom = 1; await applyZoom(lens === 'tele' ? S.teleZoom : 1);
+  listCameras();
+}
+function stopStream() { if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; vtrack = null; }
+async function applyZoom(z) {
+  if (!zoomCap || !vtrack) { hwZoom = 1; return; }
+  z = clamp(z, Math.max(1, zoomCap.min), zoomCap.max);
+  try { await vtrack.applyConstraints({ advanced: [{ zoom: z }] }); } catch (e) {}
+  try { hwZoom = vtrack.getSettings().zoom || z; } catch (e) { hwZoom = z; }
+}
+function resetScene() {
+  tracks.forEach(tr => removeMesh(tr.id)); tracks.length = 0;
+  depthK = null; cloudGeo.setDrawRange(0, 0);
+}
+let toastT = 0;
+function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 1600); }
+async function setLens(l) {
+  if (l === lens || lensBusy) return;
+  lensBusy = true; lens = l; lensHi = lensLo = 0;
+  await applyZoom(l === 'tele' ? S.teleZoom : 1);
+  resetScene();   // 화각이 바뀌면 화면 좌표가 달라지므로 추적을 새로 시작
+  lensBusy = false;
+  toast(l === 'tele' ? `망원 ${hwZoom > 1.4 ? hwZoom.toFixed(1) + '×' : '(중앙 확대)'} · 원거리 감시` : '광각 1× · 주변 감시');
+}
+function lensLabel(m) { return { auto: '렌즈: 자동', wide: '렌즈: 광각', tele: '렌즈: 망원' }[m]; }
+$('#lensBtn').textContent = lensLabel(S.lensMode);
+$('#lensBtn').onclick = () => {
+  S.lensMode = { auto: 'wide', wide: 'tele', tele: 'auto' }[S.lensMode]; saveS();
+  $('#lensBtn').textContent = lensLabel(S.lensMode);
+  if (running && S.lensMode !== 'auto') setLens(S.lensMode);
+};
+// 렌즈 '자동': 빠르면 먼 곳(망원), 느리면 주변(광각)
+function autoLens() {
+  if (S.lensMode !== 'auto' || lensBusy || alarmOn) return;
+  const kmh = (ego() || 0) * 3.6;
+  const nearVru = tracks.some(t => t.hits >= 3 && t.Z < 25 && PRI[t.cls].grp !== 'veh');
+  lensHi = lens === 'wide' && kmh >= S.teleKmh && !nearVru ? lensHi + 0.25 : 0;
+  lensLo = lens === 'tele' && kmh < S.teleKmh - 10 ? lensLo + 0.25 : 0;
+  if (lensHi >= 3) setLens('tele');
+  else if (lensLo >= 3) setLens('wide');
+}
+async function listCameras() {
+  try {
+    const devs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'videoinput');
+    const sel = $('#camSel');
+    sel.innerHTML = '<option value="">자동 (기본 후면)</option>' + devs.map((d, i) =>
+      `<option value="${d.deviceId}">${(d.label || '카메라 ' + (i + 1)).replace(/[<>&"]/g, '')}</option>`).join('');
+    sel.value = S.camId || '';
+  } catch (e) {}
+}
+$('#camSel').onchange = async e => {
+  S.camId = e.target.value; saveS();
+  if (!running) return;
+  stopStream();
+  try { await openCamera(); } catch (err) { S.camId = ''; saveS(); await openCamera().catch(() => {}); }
+  resetScene();
+};
 
 /* ───────── 메인 루프 ───────── */
 let fpsN = 0, fpsT = 0, uiT = 0;
@@ -666,14 +799,23 @@ function loop() {
   if (detector && video.readyState >= 2 && video.currentTime !== lastVT && now - lastDetT > 33) {
     lastVT = video.currentTime; lastDetT = now;
     let res = null; try { res = detector.detectForVideo(video, now); } catch (e) {}
-    if (res) {
-      const vw = video.videoWidth, vh = video.videoHeight, f = focal(vw, vh), dets = [];
+    if (res && !lensBusy) {
+      const vw = video.videoWidth, vh = video.videoHeight, f = focal(vw, vh), raw = [];
       for (const d of res.detections) {
         const b = d.boundingBox, cls = d.categories && d.categories[0] && d.categories[0].categoryName;
         if (!b || !PRI[cls] || b.width < 6 || b.height < 6) continue;
-        dets.push(measure({ x: b.originX, y: b.originY, w: b.width, h: b.height }, cls, vw, vh, f));
+        raw.push({ x: b.originX, y: b.originY, w: b.width, h: b.height, cls });
       }
-      updateTracks(dets, t);
+      // 한 프레임 걸러 원거리 확대 감지 → 같은 물체면 더 정밀한 쪽(작은 물체는 확대 결과)으로 합침
+      cropTurn = !cropTurn;
+      if (cropTurn && detectorImg) {
+        for (const c of detectCrop(vw, vh, f)) {
+          let dup = -1;
+          raw.forEach((r, i) => { if (grpOf(r.cls) === grpOf(c.cls) && iou(r, c) > 0.3) dup = i; });
+          if (dup < 0) raw.push(c); else if (raw[dup].h < 40) raw[dup] = c;
+        }
+      }
+      updateTracks(raw.map(r => measure({ x: r.x, y: r.y, w: r.w, h: r.h }, r.cls, vw, vh, f)), t);
     }
     fpsN++; if (now - fpsT > 1000) { detFps = fpsN * 1000 / (now - fpsT); fpsN = 0; fpsT = now; }
   }
@@ -690,6 +832,10 @@ function loop() {
     if (S.testSpd > 0) { gc.className = 'chip test'; gc.textContent = '테스트 속도'; }
     else if (v != null) { gc.className = 'chip ok'; gc.textContent = `GPS ±${Math.round(gps.acc || 0)}m`; }
     else { gc.className = 'chip bad'; gc.textContent = gps.err || 'GPS 찾는 중'; }
+    autoLens();
+    const lb = $('#lensBadge');
+    lb.className = lens === 'tele' ? 'tele' : '';
+    lb.textContent = lens === 'tele' ? (hwZoom > 1.4 ? `${hwZoom.toFixed(1)}× 망원` : '중앙 확대') : '1× 광각';
     const parts = [];
     parts.push(detector ? `감지 ${detFps.toFixed(0)}fps · ${tracks.filter(x => x.hits >= 3).length}개` : '감지 모델 준비 중…');
     if (S.env) parts.push(modelMsg || (workerReady ? `깊이 ${depthDevice === 'webgpu' ? 'GPU' : 'CPU'} ${depthMs.toFixed(0)}ms` : ''));
@@ -708,13 +854,12 @@ async function start() {
   try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); await audioCtx.resume(); } catch (e) {}
   // 음성 엔진 깨우기 (사용자 탭 안에서 한 번 호출해야 이후 자동 재생 가능)
   try { if (S.voice && 'speechSynthesis' in window) { const u = new SpeechSynthesisUtterance('안전 운전 보조를 시작합니다'); u.lang = 'ko-KR'; speechSynthesis.speak(u); } } catch (e) {}
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } } });
-  } catch (e) {
-    btn.disabled = false; btn.textContent = '다시 시도';
-    alert('카메라를 열 수 없습니다. 카메라 권한을 허용해 주세요.'); return;
+  lens = S.lensMode === 'tele' ? 'tele' : 'wide';
+  try { await openCamera(); }
+  catch (e) {
+    if (S.camId) { S.camId = ''; saveS(); try { await openCamera(); } catch (e2) { stream = null; } }
+    if (!stream) { btn.disabled = false; btn.textContent = '다시 시도'; alert('카메라를 열 수 없습니다. 카메라 권한을 허용해 주세요.'); return; }
   }
-  video.srcObject = stream; await video.play().catch(() => {});
   window.addEventListener('devicemotion', onMotion);
   if ('geolocation' in navigator) geoWatch = navigator.geolocation.watchPosition(onPos, onPosErr, { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
   else gps.err = 'GPS 미지원';
@@ -727,13 +872,13 @@ async function start() {
 }
 function stop() {
   running = false;
-  if (stream) stream.getTracks().forEach(t => t.stop()); stream = null;
+  stopStream(); cropRect = null;
   window.removeEventListener('devicemotion', onMotion);
   if (geoWatch != null) { navigator.geolocation.clearWatch(geoWatch); geoWatch = null; }
   try { wakeLock && wakeLock.release(); } catch (e) {}
   try { speechSynthesis.cancel(); } catch (e) {}
   alarmOn = false; $('#alarm').classList.remove('show');
-  tracks.forEach(tr => removeMesh(tr.id)); tracks.length = 0;
+  resetScene();
   $('#runBtn').textContent = '시작'; status('정지됨');
 }
 $('#startBtn').onclick = start;
