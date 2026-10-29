@@ -14,15 +14,15 @@
 html,body{height:100%;background:var(--bg);color:var(--txt);
   font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
   font-size:16px;overflow:hidden;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
-button,input{font:inherit;color:inherit}
+button,input,select{font:inherit;color:inherit}
 #app{max-width:430px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;
   padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
 header{display:flex;align-items:center;gap:8px;padding:8px 12px 6px}
 h1{font-size:18px;font-weight:700;letter-spacing:-.01em;margin-right:auto;white-space:nowrap}
 .chip{font-size:16px;line-height:1;padding:7px 10px;border-radius:999px;background:var(--panel);
   border:1px solid var(--line);white-space:nowrap;font-variant-numeric:tabular-nums}
-.chip b{font-weight:700}
 #gpsChip.ok{color:var(--ok)} #gpsChip.bad{color:var(--mut)} #gpsChip.test{color:var(--warn)}
+#laneChip.ok{color:var(--ok)} #laneChip.half{color:var(--warn)} #laneChip.none{color:var(--mut)}
 #lvlChip.l0{color:var(--ok)} #lvlChip.l1{color:var(--warn);border-color:#5a4a1a} #lvlChip.l2{color:#fff;background:var(--bad);border-color:var(--bad)}
 
 #camWrap{position:relative;flex:1 1 56%;min-height:0;margin:0 10px;border-radius:14px;overflow:hidden;background:#000;
@@ -31,6 +31,10 @@ h1{font-size:18px;font-weight:700;letter-spacing:-.01em;margin-right:auto;white-
 #camWrap.l2{border-color:var(--bad)}
 #video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 #ovCv{position:absolute;inset:0;width:100%;height:100%}
+#infoBar{position:absolute;left:8px;top:8px;max-width:calc(100% - 130px);font-size:16px;font-weight:700;line-height:1.35;
+  background:rgba(8,10,13,.66);padding:6px 10px;border-radius:10px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#infoBar.l2{background:rgba(120,85,0,.85);color:#fff}
+#infoBar.l3{background:rgba(190,20,20,.9);color:#fff}
 #camStatus{position:absolute;left:8px;bottom:8px;max-width:calc(100% - 16px);font-size:16px;line-height:1.35;color:#dbe3ea;
   background:rgba(8,10,13,.62);padding:6px 9px;border-radius:9px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 #speedHud{position:absolute;top:8px;right:8px;text-align:right;background:rgba(8,10,13,.66);padding:6px 12px;border-radius:12px;
@@ -42,7 +46,6 @@ h1{font-size:18px;font-weight:700;letter-spacing:-.01em;margin-right:auto;white-
 #toast{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);font-size:20px;font-weight:800;padding:10px 16px;border-radius:12px;
   background:rgba(8,10,13,.75);opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1}
-.row select{width:100%;height:44px;border-radius:10px;background:#0b0d10;border:1px solid var(--line);color:var(--txt);font-size:16px;padding:0 10px}
 
 #sceneWrap{position:relative;flex:1 1 44%;min-height:0;margin:8px 10px 0;border-radius:14px;overflow:hidden;background:#0e1116;border:1px solid var(--line)}
 #glCv{position:absolute;inset:0;width:100%;height:100%;display:block}
@@ -51,7 +54,6 @@ h1{font-size:18px;font-weight:700;letter-spacing:-.01em;margin-right:auto;white-
 
 #dock{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:8px 10px calc(8px + env(safe-area-inset-bottom))}
 #dock button{height:52px;border-radius:12px;border:1px solid var(--line);background:var(--panel);font-size:16px;font-weight:600}
-#dock button.on{background:#0f2a36;border-color:#1f5a72;color:var(--acc)}
 #dock button:active{transform:scale(.97)}
 
 /* 대시보드 가로 거치 */
@@ -70,7 +72,7 @@ h1{font-size:18px;font-weight:700;letter-spacing:-.01em;margin-right:auto;white-
   background:rgba(225,18,18,.9);pointer-events:none;text-align:center;padding:24px;animation:pulse .45s ease-in-out infinite alternate}
 #alarm.show{display:flex}
 #alarm .dir{font-size:88px;line-height:1;color:#fff}
-#alarm .big{font-size:60px;font-weight:900;letter-spacing:-.02em;line-height:1.08;color:#fff;text-shadow:0 4px 24px rgba(0,0,0,.35)}
+#alarm .big{font-size:56px;font-weight:900;letter-spacing:-.02em;line-height:1.08;color:#fff;text-shadow:0 4px 24px rgba(0,0,0,.35)}
 #alarm .sub{font-size:28px;font-weight:800;color:#fff;margin-top:12px;font-variant-numeric:tabular-nums}
 @keyframes pulse{from{background:rgba(230,18,18,.94)}to{background:rgba(140,0,0,.82)}}
 
@@ -96,6 +98,7 @@ h1{font-size:18px;font-weight:700;letter-spacing:-.01em;margin-right:auto;white-
 .row label span{color:var(--acc);font-variant-numeric:tabular-nums}
 .row .hint{font-size:16px;color:var(--mut);margin-top:4px;line-height:1.4}
 .row input[type=range]{width:100%;accent-color:var(--acc);height:28px}
+.row select{width:100%;height:44px;border-radius:10px;background:#0b0d10;border:1px solid var(--line);color:var(--txt);font-size:16px;padding:0 10px}
 .tog{display:flex;justify-content:space-between;align-items:center;font-size:16px;padding:12px 0;border-bottom:1px solid var(--line)}
 .tog input{width:24px;height:24px;accent-color:var(--acc)}
 </style>
@@ -104,6 +107,7 @@ h1{font-size:18px;font-weight:700;letter-spacing:-.01em;margin-right:auto;white-
 <div id="app">
   <header>
     <h1>카 세이프티 3D</h1>
+    <span class="chip none" id="laneChip">차선 —</span>
     <span class="chip bad" id="gpsChip">GPS 대기</span>
     <span class="chip l0" id="lvlChip">안전</span>
   </header>
@@ -111,6 +115,7 @@ h1{font-size:18px;font-weight:700;letter-spacing:-.01em;margin-right:auto;white-
   <section id="camWrap">
     <video id="video" playsinline muted autoplay></video>
     <canvas id="ovCv"></canvas>
+    <div id="infoBar">준비 중</div>
     <div id="speedHud"><div class="v" id="spdV">--</div><div class="u">km/h</div><div id="lensBadge">1× 광각</div></div>
     <div id="toast"></div>
     <div id="camStatus">대기 중</div>
@@ -118,7 +123,7 @@ h1{font-size:18px;font-weight:700;letter-spacing:-.01em;margin-right:auto;white-
 
   <section id="sceneWrap">
     <canvas id="glCv"></canvas>
-    <div id="legend"><i style="background:#4ade80"></i>안전<i style="background:#fbbf24"></i>주의<i style="background:#ef4444"></i>위험</div>
+    <div id="legend"><i style="background:#7b8794"></i>진로 밖<i style="background:#4ade80"></i>진로 안<i style="background:#fbbf24"></i>주의<i style="background:#ef4444"></i>위험</div>
   </section>
 
   <nav id="dock">
@@ -134,11 +139,11 @@ h1{font-size:18px;font-weight:700;letter-spacing:-.01em;margin-right:auto;white-
 <div id="startScr">
   <div class="card">
     <h2>카 세이프티 3D</h2>
-    <p>휴대폰 후면 카메라로 전방을 보고 차량·보행자·자전거·오토바이를 추적합니다. GPS로 측정한 내 차 속도와 함께 충돌까지 남은 시간(TTC)을 계산해 미리 경고합니다.</p>
+    <p>휴대폰 후면 카메라로 차선과 전방의 차량·보행자·자전거·오토바이를 인식합니다. 내 차선 안에서, 내 속도로는 제때 멈추기 어려워지는 대상이 있을 때만 경고합니다.</p>
     <ul>
-      <li>대시보드나 거치대에 <b>가로로</b> 고정하고, 카메라가 도로 정면을 보게 하세요</li>
-      <li>설정에서 폰 높이(지면 기준)와 보닛 길이를 맞추면 거리가 정확해집니다</li>
-      <li>경고는 화면 전체 빨간색, 경고음, 음성으로 나옵니다</li>
+      <li>대시보드나 거치대에 <b>가로로</b>, 차 폭의 가운데쯤에 고정하세요</li>
+      <li>설정에서 폰 높이와 보닛 길이를 맞추면 거리가 정확해집니다</li>
+      <li>진로 밖이거나 멀어지는 대상은 화면 안내만 하고 경고하지 않습니다</li>
     </ul>
     <button id="startBtn">카메라 · GPS · 센서 시작</button>
     <p class="note">운전 보조용 실험 도구이며 차량의 충돌 방지 장치를 대신하지 않습니다. 운전 중에는 화면을 조작하지 말고 전방을 주시하세요. 첫 실행 시 모델을 내려받습니다.</p>
@@ -148,23 +153,27 @@ h1{font-size:18px;font-weight:700;letter-spacing:-.01em;margin-right:auto;white-
 <div id="sheet">
   <h3>설정 <button id="sheetClose">닫기</button></h3>
   <h4>경고 기준</h4>
-  <div class="row"><label>경고 시간 (TTC) <span id="warnTV"></span></label><input type="range" id="warnT" min="1.2" max="4" step="0.1"><div class="hint">충돌까지 이 시간보다 짧으면 빨간 경고. 보행자·자전거는 0.6초 더 일찍 경고합니다.</div></div>
-  <div class="row"><label>내 진로 폭 <span id="laneWV"></span></label><input type="range" id="laneW" min="1.8" max="4.0" step="0.1"><div class="hint">차 폭에 여유를 더한 값. 이 폭 안에 있거나 들어올 물체만 위험으로 봅니다.</div></div>
+  <div class="row"><label>반응 시간 <span id="reactTV"></span></label><input type="range" id="reactT" min="0.6" max="2.0" step="0.1"><div class="hint">경고를 보고 브레이크를 밟기까지 걸리는 시간. 길게 잡을수록 일찍 경고합니다.</div></div>
+  <div class="row"><label>급제동 한계 <span id="brakeAV"></span></label><input type="range" id="brakeA" min="4" max="8" step="0.5"><div class="hint">이보다 세게 밟아야만 멈출 수 있게 되기 직전에 빨간 경고를 냅니다. 낮출수록 일찍 경고합니다 (마른 노면 급제동 약 7~8 m/s²).</div></div>
+  <h4>차선</h4>
+  <div class="tog">차선 인식<input type="checkbox" id="laneOn"></div>
+  <div class="row"><label>차선 폭 (차선을 못 찾을 때) <span id="laneWfV"></span></label><input type="range" id="laneWf" min="2.6" max="4.0" step="0.1"><div class="hint">차선이 안 보이면 이 폭과 차의 회전 방향으로 내 진로를 정합니다.</div></div>
   <h4>거치 · 카메라</h4>
   <div class="row"><label>폰 높이 (지면에서) <span id="camHV"></span></label><input type="range" id="camH" min="0.8" max="2.2" step="0.05"></div>
   <div class="row"><label>보닛 길이 (폰 → 앞범퍼) <span id="bonnetV"></span></label><input type="range" id="bonnet" min="0.5" max="3.5" step="0.1"></div>
-  <div class="row"><label>카메라 화각 (긴 변) <span id="fovV"></span></label><input type="range" id="fov" min="50" max="95" step="1"><div class="hint">거리가 실제보다 가깝게 나오면 값을 줄이세요.</div></div>
-  <div class="row"><label>수평 보정 <span id="pitchOffV"></span></label><input type="range" id="pitchOff" min="-10" max="10" step="0.5"><div class="hint">화면의 점선 수평선이 실제 지평선과 맞도록 조정하세요.</div></div>
+  <div class="row"><label>카메라 화각 (긴 변) <span id="fovV"></span></label><input type="range" id="fov" min="20" max="95" step="1"><div class="hint">거리가 실제보다 가깝게 나오면 값을 줄이세요.</div></div>
+  <div class="row"><label>수평 보정 <span id="pitchOffV"></span></label><input type="range" id="pitchOff" min="-10" max="10" step="0.5"><div class="hint">점선 수평선이 지평선과 맞게 조정하세요. 양쪽 차선이 보이면 주행 중 자동으로 미세 보정됩니다.</div></div>
   <h4>렌즈 · 원거리</h4>
-  <div class="row"><label>망원 배율 <span id="teleZoomV"></span></label><input type="range" id="teleZoom" min="2" max="5" step="0.5"><div class="hint">갤럭시 Z 폴드8 울트라의 광학 망원은 3배입니다. 3배 이상에서 망원 렌즈로 전환됩니다.</div></div>
+  <div class="row"><label>망원 배율 <span id="teleZoomV"></span></label><input type="range" id="teleZoom" min="2" max="5" step="0.5"><div class="hint">갤럭시 Z 폴드8 울트라의 광학 망원은 3배입니다.</div></div>
   <div class="row"><label>망원 자동 전환 속도 <span id="teleKmhV"></span></label><input type="range" id="teleKmh" min="30" max="90" step="5"><div class="hint">렌즈 '자동'일 때 이 속도 이상으로 3초 달리면 망원, 10km/h 아래로 내려가면 광각으로 돌아갑니다.</div></div>
-  <div class="row"><label>카메라 선택</label><select id="camSel"><option value="">자동 (기본 후면)</option></select><div class="hint">보통 '자동'이 맞습니다. 특정 렌즈를 직접 고르면 화각 값도 그 렌즈에 맞춰 주세요.</div></div>
+  <div class="row"><label>카메라 선택</label><select id="camSel"><option value="">자동 (기본 후면)</option></select><div class="hint">보통 '자동'이 맞습니다. 망원 렌즈를 직접 고르면 화각을 25° 정도로 맞추세요.</div></div>
   <div class="tog">환경 3D 재구성 (깊이 추정)<input type="checkbox" id="env"></div>
   <h4>속도</h4>
   <div class="row"><label>테스트 속도 (GPS 대신) <span id="testSpdV"></span></label><input type="range" id="testSpd" min="0" max="100" step="5"><div class="hint">0이면 GPS 속도를 씁니다. 정차 상태에서 동작을 확인할 때만 쓰세요.</div></div>
   <h4>알림</h4>
   <div class="tog">경고음<input type="checkbox" id="sound"></div>
-  <div class="tog">음성 안내<input type="checkbox" id="voice"></div>
+  <div class="tog">음성 경고<input type="checkbox" id="voice"></div>
+  <div class="tog">주변 보행자 안내 음성 (경고 아님)<input type="checkbox" id="infoVoice"></div>
   <div class="tog">진동<input type="checkbox" id="vibe"></div>
 </div>
 
@@ -189,21 +198,25 @@ const PRI = {
 const CLASSES = Object.keys(PRI);
 
 /* ───────── 설정 ───────── */
-const DEF = { warnT: 2.4, laneW: 2.6, camH: 1.25, bonnet: 1.8, fov: 70, pitchOff: 0, testSpd: 0, sound: true, voice: true, vibe: true, env: false,
-  lensMode: 'auto', teleZoom: 3, teleKmh: 55, camId: '' };
+const DEF = { reactT: 1.0, brakeA: 6, laneOn: true, laneWf: 3.3, camH: 1.25, bonnet: 1.8, fov: 70, pitchOff: 0, testSpd: 0,
+  sound: true, voice: true, infoVoice: true, vibe: true, env: false, lensMode: 'auto', teleZoom: 3, teleKmh: 55, camId: '' };
 const S = Object.assign({}, DEF);
-try { Object.assign(S, JSON.parse(localStorage.getItem('carsafety3d') || '{}')); } catch (e) {}
+try { const sv = JSON.parse(localStorage.getItem('carsafety3d') || '{}'); for (const k in DEF) if (k in sv) S[k] = sv[k]; } catch (e) {}
 function saveS() { try { localStorage.setItem('carsafety3d', JSON.stringify(S)); } catch (e) {} }
 const fmt = {
-  warnT: v => (+v).toFixed(1) + ' 초', laneW: v => (+v).toFixed(1) + ' m', camH: v => (+v).toFixed(2) + ' m',
-  bonnet: v => (+v).toFixed(1) + ' m', fov: v => v + '°', pitchOff: v => (+v > 0 ? '+' : '') + (+v).toFixed(1) + '°',
-  testSpd: v => +v ? v + ' km/h' : '끔', teleZoom: v => (+v).toFixed(1) + '×', teleKmh: v => v + ' km/h'
+  reactT: v => (+v).toFixed(1) + ' 초', brakeA: v => (+v).toFixed(1) + ' m/s²', laneWf: v => (+v).toFixed(1) + ' m',
+  camH: v => (+v).toFixed(2) + ' m', bonnet: v => (+v).toFixed(1) + ' m', fov: v => v + '°',
+  pitchOff: v => (+v > 0 ? '+' : '') + (+v).toFixed(1) + '°', testSpd: v => +v ? v + ' km/h' : '끔',
+  teleZoom: v => (+v).toFixed(1) + '×', teleKmh: v => v + ' km/h'
 };
 for (const k of Object.keys(fmt)) {
   const el = $('#' + k); el.value = S[k]; $('#' + k + 'V').textContent = fmt[k](S[k]);
   el.addEventListener('input', () => { S[k] = +el.value; $('#' + k + 'V').textContent = fmt[k](S[k]); saveS(); });
 }
-for (const k of ['sound', 'voice', 'vibe', 'env']) { const el = $('#' + k); el.checked = S[k]; el.addEventListener('change', () => { S[k] = el.checked; saveS(); if (k === 'env') onEnvToggle(); }); }
+for (const k of ['sound', 'voice', 'infoVoice', 'vibe', 'env', 'laneOn']) {
+  const el = $('#' + k); el.checked = S[k];
+  el.addEventListener('change', () => { S[k] = el.checked; saveS(); if (k === 'env') onEnvToggle(); if (k === 'laneOn' && !S.laneOn) LANE.L = LANE.R = null; });
+}
 $('#teleZoom').addEventListener('change', () => { if (lens === 'tele') applyZoom(S.teleZoom).then(resetScene); });
 $('#setBtn').onclick = () => $('#sheet').classList.add('open');
 $('#sheetClose').onclick = () => $('#sheet').classList.remove('open');
@@ -213,7 +226,6 @@ const video = $('#video');
 let running = false, stream = null, detector = null, worker = null, workerReady = false, workerBusy = false;
 let lastVT = -1, lastDetT = 0, detFps = 0, depthMs = 0, depthDevice = '', modelMsg = '';
 let wakeLock = null, audioCtx = null, geoWatch = null;
-// 렌즈 상태: 하드웨어 줌(3× 이상이면 폰이 망원 렌즈로 전환) — 지원 안 되면 중앙 확대 감지로 대체
 let vtrack = null, zoomCap = null, hwZoom = 1, lens = 'wide', lensHi = 0, lensLo = 0, lensBusy = false, detectorImg = null;
 const tracks = []; let nextId = 1;
 function status(t) { $('#camStatus').textContent = t; }
@@ -228,7 +240,6 @@ function hav(a, b) {
 function onPos(p) {
   const c = p.coords, t = p.timestamp / 1000, cur = { lat: c.latitude, lon: c.longitude };
   let s = c.speed;
-  // 기기가 속도를 주지 않으면 연속 위치 차이로 계산 (정확도보다 이동이 클 때만)
   if ((s == null || isNaN(s)) && gps.last) {
     const dt = t - gps.lastT, d = hav(gps.last, cur);
     if (dt > 0.5 && d > (c.accuracy || 10) * 0.5) s = d / dt; else if (dt > 0.5) s = 0;
@@ -237,7 +248,6 @@ function onPos(p) {
   gps.acc = c.accuracy; gps.last = cur; gps.lastT = t; gps.err = '';
 }
 function onPosErr(e) { gps.err = e.code === 1 ? '위치 권한 거부' : 'GPS 신호 없음'; }
-// 내 차 속도 (m/s). 알 수 없으면 null
 function ego() {
   if (S.testSpd > 0) return S.testSpd / 3.6;
   if (gps.speed != null && performance.now() - gps.t < 4000) return gps.speed;
@@ -245,8 +255,7 @@ function ego() {
 }
 
 /* ───────── 센서: 중력(카메라 기울기) · 회전 ───────── */
-// 차의 가감속이 섞이지 않도록 중력 벡터를 느리게 저역통과
-const sens = { g: null, pitch: 5 * DEG, ok: false, yawRate: 0 };
+const sens = { g: null, pitch: 5 * DEG, ok: false, yawRate: 0, yawSlow: 0 };
 function onMotion(e) {
   const a = e.accelerationIncludingGravity;
   if (a && a.x != null) {
@@ -254,26 +263,24 @@ function onMotion(e) {
     else { const k = 0.02; sens.g.x += (a.x - sens.g.x) * k; sens.g.y += (a.y - sens.g.y) * k; sens.g.z += (a.z - sens.g.z) * k; }
     const n = Math.hypot(sens.g.x, sens.g.y, sens.g.z);
     if (n > 5) {
-      // 후면 카메라는 기기 -z 방향. 아래쪽 기울기 = asin(g_z / |g|)  — 세로·가로 거치 모두 동일
-      sens.pitch = Math.asin(clamp(sens.g.z / n, -1, 1)) + S.pitchOff * DEG;
+      // 후면 카메라 = 기기 -z 방향. 아래쪽 기울기 = asin(g_z/|g|) + 수동 보정 + 차선 평행 자동 보정
+      sens.pitch = Math.asin(clamp(sens.g.z / n, -1, 1)) + S.pitchOff * DEG + LANE.pitchAuto;
       sens.ok = true;
     }
   }
   const r = e.rotationRate;
   if (r && sens.g) {
-    // 세계 수직축(=중력 반대 방향) 둘레의 회전 = 차가 도는 yaw
     const n = Math.hypot(sens.g.x, sens.g.y, sens.g.z) || 1;
     const w = ((r.beta || 0) * sens.g.x + (r.gamma || 0) * sens.g.y + (r.alpha || 0) * sens.g.z) / n * DEG;
     sens.yawRate = sens.yawRate * 0.7 + w * 0.3;
+    sens.yawSlow = sens.yawSlow * 0.95 + w * 0.05;   // 진로 곡률 추정용 (느린 필터)
   }
 }
 
 /* ───────── 카메라 기하 ───────── */
-// 줌 배율만큼 화각이 좁아진 실제 화각으로 초점거리(px) 계산
 function fovEff() { return 2 * Math.atan(Math.tan(S.fov * DEG / 2) / Math.max(1, hwZoom)); }
 function focal(vw, vh) { return (Math.max(vw, vh) / 2) / Math.tan(fovEff() / 2); }
 
-// 거리 추정: ① 바닥 접점(카메라 높이·기울기) ② 클래스 높이 ③ 뒷모습 폭 — 가중 평균
 function measure(bb, cls, vw, vh, f) {
   const P = PRI[cls], cx = vw / 2, cy = vh / 2;
   const topCut = bb.y < vh * 0.01, botCut = bb.y + bb.h > vh * 0.99;
@@ -281,7 +288,6 @@ function measure(bb, cls, vw, vh, f) {
   let zs = 0, ws = 0;
   if (!botCut && sens.ok) {
     const ang = sens.pitch + Math.atan((bb.y + bb.h - cy) / f);
-    // 원거리(바닥 각도 1° 미만)는 차체 흔들림 오차가 커서 크기 기반 추정을 우선
     if (ang > 0.004) { const d = S.camH / Math.tan(ang); if (d < 220) { const w = ang > 0.05 ? 2 : ang > 0.017 ? 1 : 0.3; zs += d * w; ws += w; } }
   }
   if (!topCut && !botCut) { zs += P.h * f / bb.h; ws += 1; }
@@ -292,13 +298,248 @@ function measure(bb, cls, vw, vh, f) {
   return { bb, cls, X, Z };
 }
 
-/* ───────── 추적 (알파-베타 필터) ───────── */
+/* ==LOGIC-START== 차선 모델 · 진로 · 충돌 판단 (DOM 없이 동작) */
+// 차선 경계 = 지면 좌표에서 X(D) = a + b·D + c·D²  (X: 오른쪽 +, D: 전방 거리 m)
+const LANE = { L: null, R: null, width: 3.3, pitchAuto: 0 };
+function evB(m, D) {
+  // 관측 범위 밖은 끝점 기울기로 직선 연장 (2차항 폭주 방지)
+  const lim = m.dMax + 15;
+  if (D <= lim) return m.a + m.b * D + m.c * D * D;
+  return m.a + m.b * lim + m.c * lim * lim + (m.b + 2 * m.c * lim) * (D - lim);
+}
+function solveLS(pts, quad) {
+  const n = quad ? 3 : 2, A = [[0, 0, 0], [0, 0, 0], [0, 0, 0]], y = [0, 0, 0];
+  for (const q of pts) {
+    const w = 1 / (1 + q.D / 15), ph = [1, q.D, q.D * q.D];
+    for (let i = 0; i < n; i++) { y[i] += w * ph[i] * q.X; for (let j = 0; j < n; j++) A[i][j] += w * ph[i] * ph[j]; }
+  }
+  for (let i = 0; i < n; i++) {               // 가우스 소거
+    let p = i; for (let r = i + 1; r < n; r++) if (Math.abs(A[r][i]) > Math.abs(A[p][i])) p = r;
+    [A[i], A[p]] = [A[p], A[i]]; [y[i], y[p]] = [y[p], y[i]];
+    if (Math.abs(A[i][i]) < 1e-9) return null;
+    for (let r = i + 1; r < n; r++) { const k = A[r][i] / A[i][i]; for (let c = i; c < n; c++) A[r][c] -= k * A[i][c]; y[r] -= k * y[i]; }
+  }
+  const s = [0, 0, 0];
+  for (let i = n - 1; i >= 0; i--) { let v = y[i]; for (let c = i + 1; c < n; c++) v -= A[i][c] * s[c]; s[i] = v / A[i][i]; }
+  return { a: s[0], b: s[1], c: quad ? s[2] : 0 };
+}
+function solveN(A, y, n) {
+  for (let i = 0; i < n; i++) {
+    let p = i; for (let r = i + 1; r < n; r++) if (Math.abs(A[r][i]) > Math.abs(A[p][i])) p = r;
+    [A[i], A[p]] = [A[p], A[i]]; [y[i], y[p]] = [y[p], y[i]];
+    if (Math.abs(A[i][i]) < 1e-9) return null;
+    for (let r = i + 1; r < n; r++) { const k = A[r][i] / A[i][i]; for (let c = i; c < n; c++) A[r][c] -= k * A[i][c]; y[r] -= k * y[i]; }
+  }
+  const s = new Array(n).fill(0);
+  for (let i = n - 1; i >= 0; i--) { let v = y[i]; for (let c = i + 1; c < n; c++) v -= A[i][c] * s[c]; s[i] = v / A[i][i]; }
+  return s;
+}
+const spanOf = sel => { let a = Infinity, b = 0; for (const q of sel) { if (q.D < a) a = q.D; if (q.D > b) b = q.D; } return [a, b]; };
+// 한쪽 경계선 후보 점 고르기: 이전 모델 근처, 없으면 가까운 구간 히스토그램의 가장 진한 줄 (0.4~3.4 m)
+function selectSide(pts, prior, side) {
+  if (prior) return pts.filter(q => Math.abs(q.X - evB(prior, q.D)) < 0.45 + 0.012 * q.D);
+  const bins = new Float32Array(30);
+  for (const q of pts) { if (q.D > 22) continue; const k = Math.floor((q.X * side - 0.4) / 0.1); if (k >= 0 && k < 30) bins[k]++; }
+  let best = -1, bv = 0;
+  for (let k = 0; k < 30; k++) { const s = bins[k] + 0.5 * ((k ? bins[k - 1] : 0) + (k < 29 ? bins[k + 1] : 0)); if (s > bv) { bv = s; best = k; } }
+  if (bv < 5) return null;
+  const x0 = side * (0.4 + (best + 0.5) * 0.1);
+  return pts.filter(q => Math.abs(q.X - x0) < 0.5 + 0.03 * q.D);
+}
+// 두 경계선은 같은 도로 → 곡률(c)은 공유, 위치(a)·방향(b)은 선마다 (기울기 오차는 방향 차이로 드러남)
+// shareB=true: 완전 평행 모델(포착 단계, 잡음에 강함) / false: 방향을 선마다 (마무리 단계)
+function fitJoint(sides, quad, shareB) {
+  const na = sides.length, nb = shareB ? 1 : na, n = na + nb + (quad ? 1 : 0);
+  const A = Array.from({ length: n }, () => new Array(n).fill(0)), y = new Array(n).fill(0);
+  sides.forEach((sel, si) => {
+    const ib = na + (shareB ? 0 : si);
+    for (const q of sel) {
+      const w = 1 / (1 + q.D / 15), ph = new Array(n).fill(0);
+      ph[si] = 1; ph[ib] = q.D; if (quad) ph[na + nb] = q.D * q.D;
+      for (let i = 0; i < n; i++) { if (!ph[i]) continue; y[i] += w * ph[i] * q.X; for (let j = 0; j < n; j++) A[i][j] += w * ph[i] * ph[j]; }
+    }
+  });
+  const s = solveN(A, y, n); if (!s) return null;
+  return sides.map((_, si) => ({ a: s[si], b: s[na + (shareB ? 0 : si)], c: quad ? s[na + nb] : 0 }));
+}
+function fitLanes(pts) {
+  // 평행 모델로 먼저 포착 → 한쪽을 잃으면(기울기 오차로 두 선이 벌어져 보일 때) 선마다 방향을 둔 모델로 다시
+  const a = fitLanesOnce(pts, 2);
+  if (a.L && a.R) return a;
+  const b = fitLanesOnce(pts, 0);
+  return (b.L ? 1 : 0) + (b.R ? 1 : 0) > (a.L ? 1 : 0) + (a.R ? 1 : 0) ? b : a;
+}
+function fitLanesOnce(pts, shareIters) {
+  let sL = selectSide(pts, LANE.L, -1), sR = selectSide(pts, LANE.R, 1), mL = null, mR = null;
+  const ok = s => s && s.length >= 8 && (([a, b]) => b - a >= 5)(spanOf(s));
+  for (let it = 0; it < 4; it++) {
+    if (!ok(sL)) sL = null; if (!ok(sR)) sR = null;
+    if (!sL && !sR) return { L: null, R: null };
+    const sides = [sL, sR].filter(Boolean), all = sides.flat(), [d0, d1] = spanOf(all);
+    const ms = fitJoint(sides, d1 - d0 > 16 && all.length >= 24, it < shareIters); if (!ms) return { L: null, R: null };
+    let k = 0; mL = sL ? ms[k++] : null; mR = sR ? ms[k++] : null;
+    for (const [m, s] of [[mL, sL], [mR, sR]]) if (m) { [m.dMin, m.dMax] = spanOf(s); m.n = s.length; }
+    if (mL) sL = pts.filter(q => Math.abs(q.X - evB(mL, q.D)) < 0.25 + 0.008 * q.D);
+    if (mR) sR = pts.filter(q => Math.abs(q.X - evB(mR, q.D)) < 0.25 + 0.008 * q.D);
+  }
+  const valid = (m, side) => m && Math.abs(m.b) <= 0.25 && Math.abs(m.c) <= 0.006 && m.a * side >= 0.3 && m.a * side <= 3.6;
+  if (!valid(mL, -1)) mL = null; if (!valid(mR, 1)) mR = null;
+  if (mL && mR) { const w = mR.a - mL.a; if (w < 2.4 || w > 4.6 || Math.abs(mR.b - mL.b) > 0.1) { if (mL.n < mR.n) mL = null; else mR = null; } }
+  // 기울기 점검용: 가까운 구간(35m 이내)에서 각 선의 직선 기울기를 따로 구함
+  let slope = null;
+  if (mL && mR && sL && sR) {
+    const nl = sL.filter(q => q.D < 35), nr = sR.filter(q => q.D < 35);
+    const sp = s => { const [a, b] = spanOf(s); return b - a; };
+    if (nl.length >= 12 && nr.length >= 12 && sp(nl) >= 8 && sp(nr) >= 8) {
+      const fl = solveLS(nl, false), fr = solveLS(nr, false);
+      if (fl && fr) slope = fr.b - fl.b;
+    }
+  }
+  return { L: mL, R: mR, slope };
+}
+function laneConf(k) { const m = LANE[k]; return m && m.conf >= 0.3 ? m : null; }
+function updateLanes(pts, now, v) {
+  const fr = fitLanes(pts);
+  for (const k of ['L', 'R']) {
+    const f = fr[k], o = LANE[k];
+    if (f) {
+      if (o) { const g = 0.35; o.a += (f.a - o.a) * g; o.b += (f.b - o.b) * g; o.c += (f.c - o.c) * g; o.dMin = f.dMin; o.dMax = f.dMax; o.conf = Math.min(1, o.conf + 0.2); o.seen = now; }
+      else LANE[k] = { ...f, conf: 0.4, seen: now };
+    } else if (o) { o.conf -= 0.08; if (o.conf <= 0 || now - o.seen > 1500) LANE[k] = null; }
+  }
+  // 차선 변경: 경계선이 차 가운데를 지나가면 반대쪽 경계가 됨
+  if (LANE.L && LANE.L.a > -0.25) { LANE.R = LANE.L; LANE.L = null; }
+  else if (LANE.R && LANE.R.a < 0.25) { LANE.L = LANE.R; LANE.R = null; }
+  const L = laneConf('L'), R = laneConf('R');
+  if (L && R) {
+    const w = R.a - L.a; if (w > 2.4 && w < 4.6) LANE.width += (w - LANE.width) * 0.05;
+    // 평행한 두 선이 벌어지거나 모여 보이면 기울기 추정이 틀린 것 → 천천히 보정
+    // (두 선 모두 안정적으로 추적된 뒤에만, 가까운 구간 직선 기울기 차이로, 작은 이득으로)
+    if (fr.slope != null && L.conf >= 0.95 && R.conf >= 0.95 && Math.abs(L.c) < 0.004 && (v || 0) > 6)
+      LANE.pitchAuto = clamp(LANE.pitchAuto + 0.015 * clamp(fr.slope, -0.05, 0.05), -6 * DEG, 6 * DEG);
+  }
+}
+// 차선이 없을 때: 차의 회전(요레이트)으로 진로 곡률을 추정
+function pathCenter(D) {
+  const v = ego(); if (!v || v < 3) return 0;
+  const w = Math.abs(sens.yawSlow) < 0.02 ? 0 : sens.yawSlow;   // 직진 중 자이로 잡음 무시 (약 1°/s)
+  return clamp(-0.5 * clamp(w / v, -1 / 30, 1 / 30) * D * D, -15, 15);
+}
+// 거리 D에서 내 진로의 [왼쪽 경계, 오른쪽 경계, 근거(2=양쪽 차선, 1=한쪽, 0=추정)]
+function laneEdges(D) {
+  const L = laneConf('L'), R = laneConf('R');
+  if (L && R) return [evB(L, D), evB(R, D), 2];
+  if (L) { const x = evB(L, D); return [x, x + LANE.width, 1]; }
+  if (R) { const x = evB(R, D); return [x - LANE.width, x, 1]; }
+  const c = pathCenter(D); return [c - S.laneWf / 2, c + S.laneWf / 2, 0];
+}
+// 각 대상이 내 쪽으로 이보다 빨리 멀어질 수는 없다 (m/s)
+const VMAX = { person: 2.5, bicycle: 8 };
+// 위험 단계: 0 진로 밖 · 1 진로 안(안전) · 2 주의 · 3 위험
+function assess(tr) {
+  const P = PRI[tr.cls], v = ego(), vv = v || 0;
+  const gap = Math.max(0.3, tr.Z - S.bonnet);
+  // 접근 속도: 거리 변화(운동 추적) + 크기 변화(룸잉, 보정값과 무관)를 합침
+  let closing = -tr.vZ;
+  if (tr.lhOk && tr.Z < 80) closing = 0.5 * closing + 0.5 * tr.Z * tr.lhRate;
+  if (v != null && VMAX[tr.cls] != null) closing = Math.max(closing, vv - VMAX[tr.cls]);
+  const half = tr.cls === 'person' ? 0.3 : P.w / 2;
+  const need = P.grp === 'veh' ? 0.5 : 0.15;          // 진로와 이만큼 겹쳐야 '진로 안'
+  const [eL, eR] = laneEdges(tr.Z);
+  const ovNow = Math.min(tr.X + half, eR) - Math.max(tr.X - half, eL);
+  const tReach = closing > 0.3 ? gap / closing : Infinity;
+  let rel = ovNow > need ? 'in' : 'out';
+  if (rel === 'out' && tr.hits >= 6 && tReach < 5 && Math.abs(tr.vX) > 0.35) {
+    // 끼어들기·횡단: 내가 도착할 때 진로 안에 들어와 있는가
+    const mid = (eL + eR) / 2, hw = (eR - eL) / 2;
+    if (Math.sign(mid - tr.X) === Math.sign(tr.vX)) {
+      const offAt = tr.X - mid + tr.vX * tReach;
+      if (Math.min(offAt + half, hw) - Math.max(offAt - half, -hw) > need) rel = 'enter';
+    }
+  }
+  // 물리: 접근 속도 dv를 없애는 데 필요한 거리 = 반응 거리 + 제동 거리 + 여유
+  const dv = Math.max(0, closing);
+  const dRed = dv * S.reactT + dv * dv / (2 * S.brakeA) + 2;
+  const dYel = dv * (S.reactT + 1.2) + dv * dv / (2 * 3.5) + 4;
+  const mature = tr.hits >= (tr.Z > 40 ? 8 : 4);
+  let level = 0, why = '';
+  if (rel === 'out') {
+    why = '진로 밖';
+    // 진로 가장자리 바로 옆 보행자·자전거를 곧 지나칠 때만 주의
+    if (P.grp === 'vru' && vv > 3 && -ovNow < 0.6 && tReach < 2.5) { level = 2; why = '진로 옆 근접'; }
+  } else if (dv < 0.3) {
+    level = 1; why = closing < -0.5 ? '멀어지는 중' : '같은 속도';
+    if (P.grp === 'veh' && vv > 8 && gap / vv < 0.6) { level = 2; why = '차간 거리 부족'; }
+  } else {
+    level = 1; why = '접근 중';
+    if (gap <= dYel) { level = 2; why = rel === 'enter' ? (P.grp === 'veh' ? '끼어들기 주의' : '진로 진입 주의') : '접근 주의'; }
+    if (mature && (gap <= dRed || tReach < 1.4)) { level = 3; why = '충돌 위험'; }
+    if (rel === 'enter' && level === 3 && !(tr.hits >= 10 && Math.abs(tr.vX) > 0.6)) level = 2;
+    if (P.grp === 'veh' && vv < 2.5 && level === 3 && tReach > 1.0) level = 2;   // 정체 구간 서행
+    if (P.grp === 'veh' && vv < 4.2 && level === 2 && tReach > 2.0) level = 1;   // 15km/h 이하 앞차 접근은 안내만
+  }
+  if (v != null && vv < 1 && level >= 2 && !(closing > 3 && tReach < 2)) level = 1;  // 내 차가 서 있을 때
+  if (level === 1 && why.endsWith('주의')) why = dv >= 0.3 ? '접근 중' : '같은 속도';
+  tr.level = level; tr.ttc = tReach; tr.dist = gap; tr.rel = rel; tr.closing = closing; tr.why = why;
+  tr.inPath = rel !== 'out';
+}
+/* ==LOGIC-END== */
+
+/* ───────── 차선 검출 (영상 → 지면 좌표 점) ─────────
+   수평선 아래 각 줄에서 '어두움-밝음-어두움' 폭이 차선 도색 폭(약 15cm)에 맞는 곳을 찾고,
+   카메라 높이·기울기로 지면 위 (X, D)로 투영한다. */
+const laneCv = document.createElement('canvas'), laneCtx = laneCv.getContext('2d', { willReadFrequently: true });
+let laneT = 0, lanePts = [];
+function detectLanes(now) {
+  if (!S.laneOn || !sens.ok || now - laneT < 110) return;
+  laneT = now;
+  const vw = video.videoWidth, vh = video.videoHeight; if (!vw) return;
+  const W = 480, H = Math.round(480 * vh / vw), sc = W / vw;
+  if (laneCv.width !== W || laneCv.height !== H) { laneCv.width = W; laneCv.height = H; }
+  const f = focal(vw, vh) * sc, cx = W / 2, cy = H / 2, p = sens.pitch, h = S.camH;
+  const y0 = Math.max(0, Math.ceil(cy - f * Math.tan(p) + 3)); if (y0 >= H - 6) return;
+  laneCtx.drawImage(video, 0, 0, W, H);
+  const img = laneCtx.getImageData(0, y0, W, H - y0).data;
+  // 차량 영역은 제외 (번호판·후미등 오검출 방지)
+  const boxes = tracks.filter(t => t.hits >= 2 && PRI[t.cls].grp !== 'vru').map(t => [t.bb.x * sc, t.bb.y * sc, (t.bb.x + t.bb.w) * sc, (t.bb.y + t.bb.h) * sc]);
+  const I = new Float32Array(W), pts = [];
+  for (let y = y0, step = 1; y < H; y += step) {
+    const ang = p + Math.atan((y - cy) / f); if (ang < 0.012) { step = 1; continue; }
+    const D = h / Math.tan(ang);
+    step = D < 12 ? 3 : D < 25 ? 2 : 1;    // 가까운 곳은 줄 간격이 촘촘하므로 건너뜀
+    if (D < 3 || D > 70) continue;
+    const Zc = D * Math.cos(p) + h * Math.sin(p);
+    const mw = 0.15 * f / Zc; if (mw < 0.8) continue;
+    const s = clamp(Math.round(mw) + 1, 2, 40), base = (y - y0) * W * 4;
+    let sum = 0;
+    for (let x = 0; x < W; x++) { const k = base + x * 4; const v = img[k] > img[k + 1] ? img[k] : img[k + 1]; I[x] = v; sum += v; }
+    const mean = sum / W;
+    let run0 = -1;
+    for (let x = s; x <= W - s; x++) {
+      let hit = false;
+      if (x < W - s) {
+        const l = I[x - s], r = I[x + s], c = I[x];
+        hit = 2 * c - l - r - Math.abs(l - r) > 36 && c > mean + 22;
+      }
+      if (hit && run0 < 0) run0 = x;
+      else if (!hit && run0 >= 0) {
+        const len = x - run0, xc = (run0 + x - 1) / 2;
+        if (len <= 3 * mw + 3 && !boxes.some(b => xc > b[0] && xc < b[2] && y > b[1] && y < b[3]))
+          pts.push({ X: (xc - cx) * Zc / f, D });
+        run0 = -1;
+      }
+    }
+  }
+  lanePts = pts;
+  updateLanes(pts, now, ego());
+}
+
+/* ───────── 추적 (알파-베타 필터 + 크기 변화율) ───────── */
 const grpOf = c => PRI[c].grp === 'moto' ? 'vru2' : PRI[c].grp === 'vru' ? (c === 'person' ? 'p' : 'vru2') : 'veh';
 function updateTracks(dets, t) {
   const vw = video.videoWidth, vh = video.videoHeight, diag = Math.hypot(vw, vh);
   for (const tr of tracks) {
     const dt = clamp(t - tr.t, 0, 0.5);
-    // 차가 회전하면 정지 물체도 옆으로 흘러 보임 → 예측 단계에서 보상
     tr.pX = tr.X + tr.vX * dt + sens.yawRate * tr.Z * dt;
     tr.pZ = tr.Z + tr.vZ * dt;
     tr.dt = dt;
@@ -316,98 +557,115 @@ function updateTracks(dets, t) {
     if (ut.has(i) || ud.has(j)) continue;
     ut.add(i); ud.add(j);
     const tr = tracks[i], d = dets[j], dt = Math.max(0.03, tr.dt);
-    const young = tr.hits < 4;
-    const far = tr.Z > 40;  // 원거리는 측정 잡음이 커서 더 부드럽게
+    const young = tr.hits < 4, far = tr.Z > 40;
     const aX = 0.5, bX = 0.12, aZ = young ? 0.8 : far ? 0.2 : 0.3, bZ = young ? 0.25 : far ? 0.04 : 0.07;
     const rX = d.X - tr.pX, rZ = d.Z - tr.pZ;
     tr.X = tr.pX + aX * rX; tr.vX = clamp(tr.vX + bX * rX / dt, -8, 8);
     tr.Z = tr.pZ + aZ * rZ; tr.vZ = clamp(tr.vZ + bZ * rZ / dt, -45, 25);
+    // 크기 변화율 d(ln h)/dt — 다가오면 커진다. 접근속도 = 거리 × 변화율
+    const cut = d.bb.y < vh * 0.01 || d.bb.y + d.bb.h > vh * 0.99, lnh = Math.log(d.bb.h);
+    if (cut) { tr.lhInit = false; tr.lhOk = false; }
+    else if (!tr.lhInit) { tr.lh = lnh; tr.lhRate = 0; tr.lhN = 0; tr.lhInit = true; tr.lhOk = false; }
+    else {
+      const pr = tr.lh, r = lnh - pr;
+      tr.lh = pr + 0.45 * r; tr.lhRate = clamp(tr.lhRate + 0.12 * r / dt, -1.5, 3);
+      tr.lhN++; tr.lhOk = tr.lhN >= 6;
+    }
     tr.bb = d.bb; tr.t = t; tr.seen = t; tr.hits++;
     tr.votes[d.cls] = (tr.votes[d.cls] || 0) + 1;
     tr.cls = Object.keys(tr.votes).reduce((a, b) => tr.votes[a] >= tr.votes[b] ? a : b);
   }
-  tracks.forEach((tr, i) => { if (!ut.has(i)) { tr.X = tr.pX; tr.Z = tr.pZ; tr.t = t; } });
+  tracks.forEach((tr, i) => {
+    if (tr.lhInit) tr.lh += tr.lhRate * tr.dt;   // 크기도 시간에 맞춰 예측
+    if (!ut.has(i)) { tr.X = tr.pX; tr.Z = tr.pZ; tr.t = t; }
+  });
   for (let i = tracks.length - 1; i >= 0; i--) if (t - tracks[i].seen > 0.8) { removeMesh(tracks[i].id); tracks.splice(i, 1); }
   dets.forEach((d, j) => {
     if (ud.has(j)) return;
-    // 내 차가 달리는 중이면 새 물체의 초기 상대속도를 -내속도로 시작(정지 물체 가정) → 수렴이 빨라짐
     const v = ego() || 0;
     tracks.push({ id: nextId++, bb: d.bb, cls: d.cls, votes: { [d.cls]: 1 }, X: d.X, Z: d.Z, vX: 0, vZ: PRI[d.cls].grp === 'veh' ? 0 : -v * 0.8,
-      t, seen: t, hits: 1, level: 0, ttc: Infinity, aReq: 0, dist: d.Z });
+      t, seen: t, hits: 1, level: 0, ttc: Infinity, dist: d.Z, rel: 'out', why: '', inPath: false, lhInit: false, lhOk: false, lhRate: 0 });
   });
 }
 
-/* ───────── 위험 판단: TTC · 필요 감속도 · 진로 ───────── */
-function assess(tr) {
-  const P = PRI[tr.cls], v = ego();
-  const gap = Math.max(0.3, tr.Z - S.bonnet);          // 앞범퍼까지 남은 거리
-  let closing = -tr.vZ;                                 // 접근 속도 (+면 가까워짐)
-  // 보행자·자전거는 거의 서 있다고 보고 내 속도를 하한으로 (영상 측정 잡음 보완)
-  if (v != null && P.grp === 'vru' && tr.Z > 0) closing = Math.max(closing, v * (tr.cls === 'person' ? 0.85 : 0.5));
-  const ttc = closing > 0.4 ? gap / closing : Infinity;
-  const aReq = closing > 0 ? closing * closing / (2 * gap) : 0; // 지금 멈추려면 필요한 감속도 (m/s²)
-  const half = S.laneW / 2 + (P.grp === 'veh' ? P.w / 2 - 0.9 : 0.25);
-  const tLook = Math.min(isFinite(ttc) ? ttc : 3, 4);
-  const Xat = tr.X + tr.vX * tLook;                     // 그때의 옆 위치 (끼어들기·횡단 포함)
-  const inPath = Math.abs(tr.X) < half || Math.abs(Xat) < half;
-  const headway = v && v > 2 ? gap / v : Infinity;       // 앞차와의 시간 간격
-  const warnT = S.warnT + (P.grp === 'veh' ? 0 : 0.6);
-
-  let level = 0;
-  if (tr.hits >= 3 && tr.Z > 0) {
-    if (inPath) {
-      if (ttc < warnT || aReq > 5.5) level = 2;
-      else if (ttc < warnT * 1.8 || aReq > 3 || (P.grp === 'veh' && headway < 0.8)) level = 1;
-    } else if (P.grp !== 'veh' && tr.Z < 20 && Math.abs(tr.X) < half + 2.5) level = 1; // 진로 옆 보행자·자전거
-    // 정체 구간(저속)에서 앞차 경고 남발 방지
-    if (P.grp === 'veh' && v != null && v < 2.5 && level === 2 && ttc > 1.0) level = 1;
-    // 40m 밖은 충분히 오래 추적된 뒤에만 빨간 경고 (원거리 오차 ±10~20%)
-    if (tr.Z > 40 && tr.hits < 8 && level === 2) level = 1;
-  }
-  tr.level = level; tr.ttc = ttc; tr.aReq = aReq; tr.dist = gap; tr.inPath = inPath;
-}
-
-/* ───────── 경고 ───────── */
-let dangerFrames = 0, lastDanger = 0, alarmOn = false, lastBeep = 0, beepHi = false, lastSpeak = 0, lastSpoken = '';
-function beep(freq) {
+/* ───────── 경고 · 안내 ───────── */
+let dangerSince = 0, lastDanger = 0, alarmOn = false, lastBeep = 0, beepHi = false, lastSpeak = 0, lastPri = 0;
+function tone(freq, type, vol, dur) {
   if (!S.sound || !audioCtx) return;
-  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-  o.type = 'square'; o.frequency.value = freq;
-  g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.5, audioCtx.currentTime + 0.01);
-  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.2);
-  o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 0.22);
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain(), t0 = audioCtx.currentTime;
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g).connect(audioCtx.destination); o.start(); o.stop(t0 + dur + 0.02);
 }
-function speak(text, now) {
-  if (!S.voice || !('speechSynthesis' in window)) return;
-  if (text === lastSpoken && now - lastSpeak < 4000) return;
-  if (now - lastSpeak < 1800) return;
-  lastSpeak = now; lastSpoken = text;
-  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'ko-KR'; u.rate = 1.25; u.volume = 1; speechSynthesis.speak(u); } catch (e) {}
+// pri: 3 경고 · 2 주의 · 1 안내 — 높은 쪽이 낮은 쪽을 끊는다
+function speak(text, now, pri) {
+  if (!('speechSynthesis' in window)) return;
+  if (pri >= 2 && !S.voice) return;
+  if (pri === 1 && !S.infoVoice) return;
+  const gapMs = pri === 3 ? 2200 : pri === 2 ? 2500 : 7000;
+  if (now - lastSpeak < gapMs && pri <= lastPri) return;
+  lastSpeak = now; lastPri = pri;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = 'ko-KR'; u.rate = pri === 3 ? 1.3 : 1.15; u.volume = 1; speechSynthesis.speak(u); } catch (e) {}
 }
+function sideOf(tr) { const [l, r] = laneEdges(tr.Z), m = (l + r) / 2; return tr.X - m < -1.4 ? '왼쪽' : tr.X - m > 1.4 ? '오른쪽' : '전방'; }
 function updateAlarm(now) {
   let worst = null;
-  for (const tr of tracks) if (!worst || tr.level > worst.level || (tr.level === worst.level && tr.ttc < worst.ttc)) worst = tr;
+  for (const tr of tracks) if (tr.hits >= 3 && (!worst || tr.level > worst.level || (tr.level === worst.level && tr.ttc < worst.ttc))) worst = tr;
   const lvl = worst ? worst.level : 0;
-  dangerFrames = lvl === 2 ? dangerFrames + 1 : 0;
-  if (dangerFrames >= 2) { alarmOn = true; lastDanger = now; }
-  if (alarmOn && lvl < 2 && now - lastDanger > 1000) alarmOn = false;
+  // 빨간 단계가 150ms 이상 이어져야 경고 (한 프레임 튐 방지), 사라져도 1초 유지
+  if (lvl === 3) { if (!dangerSince) dangerSince = now; if (now - dangerSince > 150) { alarmOn = true; lastDanger = now; } }
+  else dangerSince = 0;
+  if (alarmOn && lvl < 3 && now - lastDanger > 1000) alarmOn = false;
   $('#alarm').classList.toggle('show', alarmOn);
-  const shown = alarmOn ? 2 : Math.min(lvl, 1);
+  const shown = alarmOn ? 2 : lvl === 2 ? 1 : 0;
   $('#camWrap').className = 'l' + shown;
   const chip = $('#lvlChip'); chip.className = 'chip l' + shown; chip.textContent = ['안전', '주의', '위험'][shown];
   if (alarmOn && worst) {
-    const name = PRI[worst.cls].name;
-    const side = worst.X < -1.2 ? '왼쪽' : worst.X > 1.2 ? '오른쪽' : '전방';
+    const name = PRI[worst.cls].name, side = sideOf(worst);
     $('#alDir').textContent = side === '왼쪽' ? '◀' : side === '오른쪽' ? '▶' : '▲';
-    $('#alBig').textContent = `${side} ${name}!`;
-    $('#alSub').textContent = `${worst.dist.toFixed(0)}m · ` + (isFinite(worst.ttc) ? `${worst.ttc.toFixed(1)}초 후 충돌` : '근접');
+    $('#alBig').textContent = `${side} ${name} 충돌 위험`;
+    $('#alSub').textContent = `${worst.dist.toFixed(0)}m · ` + (isFinite(worst.ttc) ? `${worst.ttc.toFixed(1)}초` : '근접') + ' · 브레이크';
     if (now - lastBeep > 260) {
-      lastBeep = now; beepHi = !beepHi; beep(beepHi ? 1175 : 880);
+      lastBeep = now; beepHi = !beepHi; tone(beepHi ? 1175 : 880, 'square', 0.5, 0.2);
       if (S.vibe && navigator.vibrate && beepHi) navigator.vibrate([150, 60, 150]);
     }
-    speak(`${side} ${name} 주의`, now);
+    speak(`${side} ${name}, 브레이크`, now, 3);
+    return;
   }
+  // 주의: 대상마다 한 번만, 부드러운 알림음 + 짧은 음성
+  for (const tr of tracks) {
+    if (tr.level === 2 && !tr.warned && tr.hits >= 4) {
+      tr.warned = true; tone(660, 'sine', 0.35, 0.25);
+      const name = PRI[tr.cls].name;
+      speak(tr.why === '차간 거리 부족' ? '차간 거리 주의' : tr.why === '끼어들기 주의' ? `${sideOf(tr)} 끼어들기 주의` : `${sideOf(tr)} ${name} 주의`, now, 2);
+      break;
+    }
+    if (tr.level < 2 && tr.warned && tr.level === 0) tr.warned = false;
+  }
+  // 안내: 주행 중 가까운 보행자·자전거가 처음 보일 때 (경고 아님)
+  const v = ego() || 0;
+  if (v > 3) for (const tr of tracks) {
+    if (!tr.said && tr.hits >= 5 && tr.level <= 1 && PRI[tr.cls].grp === 'vru' && tr.Z < 35) {
+      tr.said = true; const sd = sideOf(tr);
+      speak(`${sd === '전방' ? '전방' : sd}에 ${PRI[tr.cls].name}가 있습니다`, now, 1);
+      break;
+    }
+  }
+}
+// 화면 상단 한 줄 안내
+function infoText() {
+  const vis = tracks.filter(t => t.hits >= 3);
+  const top = vis.filter(t => t.level >= 2).sort((a, b) => b.level - a.level || a.ttc - b.ttc)[0];
+  if (top) return [top.level, `${sideOf(top)} ${PRI[top.cls].name} ${top.dist.toFixed(0)}m · ${top.why}` + (isFinite(top.ttc) && top.ttc < 9.9 ? ` · ${top.ttc.toFixed(1)}초` : '')];
+  const lead = vis.filter(t => t.inPath).sort((a, b) => a.dist - b.dist)[0];
+  if (lead) {
+    const kmh = Math.round(Math.abs(lead.closing) * 3.6);
+    return [1, `내 차선 ${PRI[lead.cls].name} ${lead.dist.toFixed(0)}m · ${lead.why}` + (lead.closing > 0.3 && kmh ? ` (${kmh}km/h씩 가까워짐)` : '')];
+  }
+  const vru = vis.filter(t => PRI[t.cls].grp !== 'veh' && t.Z < 50).sort((a, b) => a.Z - b.Z)[0];
+  if (vru) return [0, `${sideOf(vru)} ${PRI[vru.cls].name} ${vru.dist.toFixed(0)}m · 진로 밖`];
+  if (vis.length) return [0, `전방 ${vis.length}개 인식 · 내 진로 비어 있음`];
+  return [0, '내 진로 비어 있음'];
 }
 
 /* ───────── 카메라 위 오버레이 ───────── */
@@ -417,7 +675,11 @@ function coverMap() {
   const s = Math.max(W / vw, H / vh);
   return { s, ox: (W - vw * s) / 2, oy: (H - vh * s) / 2 };
 }
-const LC = ['#4ade80', '#fbbf24', '#ef4444'];
+const LC = ['rgba(220,228,235,.55)', '#4ade80', '#fbbf24', '#ef4444'];
+const CORR = ['56,189,248', '56,189,248', '251,191,36', '239,68,68'];
+function pathLevel() { return alarmOn ? 3 : Math.max(0, ...tracks.map(t => t.hits >= 3 && (t.inPath || t.level >= 2) ? t.level : 0)); }
+function farRange() { return lens === 'tele' ? 120 : 70; }
+function brakeLineDist() { const v = ego() || 0; return S.bonnet + v * S.reactT + v * v / (2 * S.brakeA) + 2; }
 function drawOverlay() {
   const dpr = Math.min(2, devicePixelRatio || 1);
   const Wc = Math.round(ov.clientWidth * dpr), Hc = Math.round(ov.clientHeight * dpr);
@@ -429,37 +691,55 @@ function drawOverlay() {
   const P = (x, y) => [m.ox + x * m.s, m.oy + y * m.s];
 
   if (sens.ok) {
-    // 바닥 위 내 진로(진로 폭) — 지면 기하로 투영. 색은 위험 단계
     const proj = (X, D) => { const Zc = D * Math.cos(p) + h * Math.sin(p), Yc = -h * Math.cos(p) + D * Math.sin(p); return Zc > 0.3 ? P(cx + f * X / Zc, cy - f * Yc / Zc) : null; };
-    const v = ego() || 0, near = S.bonnet, far = clamp(v * S.warnT * 2 + 10, 15, 70), R = S.laneW / 2;
-    const pts = [proj(-R, near), proj(-R, far), proj(R, far), proj(R, near)];
-    if (pts.every(Boolean)) {
-      const lv = alarmOn ? 2 : Math.max(0, ...tracks.map(t => t.inPath && t.hits >= 3 ? t.level : 0));
-      const col = ['56,189,248', '251,191,36', '239,68,68'][lv];
-      octx.beginPath(); pts.forEach((q, i) => i ? octx.lineTo(q[0], q[1]) : octx.moveTo(q[0], q[1])); octx.closePath();
-      octx.fillStyle = `rgba(${col},.14)`; octx.fill(); octx.strokeStyle = `rgba(${col},.7)`; octx.lineWidth = 2; octx.stroke();
-      // 경고 거리 표시선 (지금 속도로 경고 시간만큼 가는 거리)
-      if (v > 1) { const dW = near + v * S.warnT, a = proj(-R, dW), b = proj(R, dW); if (a && b) { octx.strokeStyle = 'rgba(239,68,68,.8)'; octx.beginPath(); octx.moveTo(a[0], a[1]); octx.lineTo(b[0], b[1]); octx.stroke(); } }
+    const line = (fn, d0, d1, n) => { const out = []; for (let i = 0; i <= n; i++) { const D = d0 + (d1 - d0) * i / n, q = proj(fn(D), D); if (q) out.push(q); } return out; };
+    const stroke = pts => { octx.beginPath(); pts.forEach((q, i) => i ? octx.lineTo(q[0], q[1]) : octx.moveTo(q[0], q[1])); octx.stroke(); };
+    // 내 진로 (차선 사이, 곡선 따라감)
+    const near = S.bonnet, far = farRange(), lv = pathLevel(), col = CORR[lv];
+    const Ls = line(D => laneEdges(D)[0], near, far, 24), Rs = line(D => laneEdges(D)[1], near, far, 24);
+    if (Ls.length > 2 && Rs.length > 2) {
+      octx.beginPath(); [...Ls, ...Rs.reverse()].forEach((q, i) => i ? octx.lineTo(q[0], q[1]) : octx.moveTo(q[0], q[1])); octx.closePath();
+      octx.fillStyle = `rgba(${col},${lv >= 2 ? .22 : .12})`; octx.fill();
+    }
+    // 인식한 차선 (실선 = 직접 인식, 점선 = 반대편에서 추정)
+    const L = laneConf('L'), R = laneConf('R');
+    octx.lineWidth = 4; octx.lineCap = 'round';
+    for (const [mdl, other] of [[L, R], [R, L]]) {
+      if (!mdl) continue;
+      octx.strokeStyle = 'rgba(74,222,128,.9)'; stroke(line(D => evB(mdl, D), Math.max(near, mdl.dMin - 2), Math.min(far, mdl.dMax + 10), 16));
+      if (!other) {
+        const sgn = mdl === L ? 1 : -1;
+        octx.setLineDash([10, 10]); octx.strokeStyle = 'rgba(74,222,128,.5)';
+        stroke(line(D => evB(mdl, D) + sgn * LANE.width, Math.max(near, mdl.dMin - 2), Math.min(far, mdl.dMax + 10), 16)); octx.setLineDash([]);
+      }
+    }
+    // 제동 한계선: 여기 안에 '서 있는 물체'가 있으면 빨간 경고가 되는 거리
+    const v = ego() || 0;
+    if (v > 3) {
+      const dB = brakeLineDist(), [l, r] = laneEdges(dB), a = proj(l, dB), b = proj(r, dB);
+      if (a && b) { octx.lineWidth = 2; octx.strokeStyle = 'rgba(239,68,68,.85)'; octx.beginPath(); octx.moveTo(a[0], a[1]); octx.lineTo(b[0], b[1]); octx.stroke(); }
     }
     const yh = cy - f * Math.tan(p);
-    if (yh > 0 && yh < vh) { const [x0, y0] = P(0, yh), [x1] = P(vw, yh); octx.setLineDash([6, 6]); octx.strokeStyle = 'rgba(255,255,255,.4)'; octx.lineWidth = 1; octx.beginPath(); octx.moveTo(x0, y0); octx.lineTo(x1, y0); octx.stroke(); octx.setLineDash([]); }
+    if (yh > 0 && yh < vh) { const [x0, y0] = P(0, yh), [x1] = P(vw, yh); octx.setLineDash([6, 6]); octx.strokeStyle = 'rgba(255,255,255,.35)'; octx.lineWidth = 1; octx.beginPath(); octx.moveTo(x0, y0); octx.lineTo(x1, y0); octx.stroke(); octx.setLineDash([]); }
   }
 
   octx.font = '700 16px -apple-system,"Noto Sans KR",sans-serif'; octx.textBaseline = 'top';
-  // 원거리 확대 감지 영역
   if (cropRect) {
     const [rx, ry] = P(cropRect.x, cropRect.y), rs = cropRect.s * m.s;
-    octx.setLineDash([4, 6]); octx.strokeStyle = 'rgba(255,255,255,.35)'; octx.lineWidth = 1; octx.strokeRect(rx, ry, rs, rs); octx.setLineDash([]);
-    octx.fillStyle = 'rgba(255,255,255,.6)'; octx.fillText('원거리', rx + 4, ry + 4);
+    octx.setLineDash([4, 6]); octx.strokeStyle = 'rgba(255,255,255,.3)'; octx.lineWidth = 1; octx.strokeRect(rx, ry, rs, rs); octx.setLineDash([]);
   }
   for (const tr of tracks) {
     if (tr.hits < 3) continue;
     const [x, y] = P(tr.bb.x, tr.bb.y), w = tr.bb.w * m.s, hh = tr.bb.h * m.s, c = LC[tr.level];
-    octx.lineWidth = tr.level === 2 ? 4 : 2.5; octx.strokeStyle = c; octx.strokeRect(x, y, w, hh);
-    const txt = `${PRI[tr.cls].name} ${tr.dist.toFixed(0)}m` + (isFinite(tr.ttc) && tr.ttc < 9.9 ? ` ${tr.ttc.toFixed(1)}s` : '');
+    octx.lineWidth = tr.level === 3 ? 4 : tr.level === 0 ? 1.5 : 2.5; octx.strokeStyle = c; octx.strokeRect(x, y, w, hh);
+    if (tr.level === 0) {   // 진로 밖: 작은 글씨만
+      octx.fillStyle = 'rgba(220,228,235,.8)'; octx.fillText(`${tr.dist.toFixed(0)}m`, x + 2, Math.max(0, y - 19));
+      continue;
+    }
+    const txt = `${PRI[tr.cls].name} ${tr.dist.toFixed(0)}m` + (tr.level >= 2 && isFinite(tr.ttc) && tr.ttc < 9.9 ? ` ${tr.ttc.toFixed(1)}s` : '');
     const tw = octx.measureText(txt).width + 12, ty = Math.max(0, y - 24);
     octx.fillStyle = c; octx.fillRect(x, ty, tw, 23);
-    octx.fillStyle = tr.level === 2 ? '#fff' : '#111'; octx.fillText(txt, x + 6, ty + 3);
+    octx.fillStyle = tr.level === 3 ? '#fff' : '#111'; octx.fillText(txt, x + 6, ty + 3);
   }
 }
 
@@ -469,23 +749,28 @@ const renderer = new THREE.WebGLRenderer({ canvas: glCv, antialias: true });
 renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0e1116); scene.fog = new THREE.Fog(0x0e1116, 60, 150);
-const cam3 = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
+const cam3 = new THREE.PerspectiveCamera(50, 1, 0.1, 250);
 scene.add(new THREE.HemisphereLight(0xcfe8ff, 0x1a1f26, 1.1));
 const sun = new THREE.DirectionalLight(0xffffff, 0.9); sun.position.set(10, 20, 8); scene.add(sun);
-const grid = new THREE.GridHelper(160, 32, 0x334050, 0x1a2129); grid.position.z = -70; scene.add(grid);
-// 진로 띠
-const laneMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.12, side: THREE.DoubleSide });
-const lane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), laneMat); lane.rotation.x = -Math.PI / 2; lane.position.y = 0.02; scene.add(lane);
-const edgeMat = new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.6 });
-const edgeGeo = new THREE.BufferGeometry(); edgeGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(12), 3));
-const edges = new THREE.LineSegments(edgeGeo, edgeMat); scene.add(edges);
-const warnLine = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.25), new THREE.MeshBasicMaterial({ color: 0xef4444, side: THREE.DoubleSide }));
-warnLine.rotation.x = -Math.PI / 2; warnLine.position.y = 0.03; scene.add(warnLine);
-// 내 차 (원점 = 폰 위치, 앞 = -z)
+const grid = new THREE.GridHelper(160, 32, 0x2a3440, 0x171d24); grid.position.z = -70; scene.add(grid);
+// 내 진로 리본
+const NS = 40;
+const corrGeo = new THREE.BufferGeometry();
+corrGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(NS * 2 * 3), 3));
+{ const idx = []; for (let i = 0; i < NS - 1; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } corrGeo.setIndex(idx); }
+const corrMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false });
+const corr = new THREE.Mesh(corrGeo, corrMat); corr.frustumCulled = false; scene.add(corr);
+function mkLine(color, dashed) {
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(NS * 3), 3));
+  const mt = dashed ? new THREE.LineDashedMaterial({ color, dashSize: 3, gapSize: 3 }) : new THREE.LineBasicMaterial({ color });
+  const l = new THREE.Line(g, mt); l.frustumCulled = false; scene.add(l); return l;
+}
+const lane3 = [mkLine(0x4ade80, false), mkLine(0x4ade80, false)];
+const brake3 = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.35), new THREE.MeshBasicMaterial({ color: 0xef4444, side: THREE.DoubleSide }));
+brake3.rotation.x = -Math.PI / 2; brake3.position.y = 0.04; scene.add(brake3);
 const egoCar = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.4, 1), new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.45 }));
 scene.add(egoCar);
 
-// 환경 포인트 클라우드
 const GW = 96, MAXP = GW * 160;
 const cloudGeo = new THREE.BufferGeometry();
 cloudGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(MAXP * 3), 3));
@@ -495,7 +780,7 @@ const cloud = new THREE.Points(cloudGeo, new THREE.PointsMaterial({ size: 0.3, v
 cloud.frustumCulled = false; scene.add(cloud);
 
 const meshes = new Map();
-const COL3 = [0x4ade80, 0xfbbf24, 0xef4444];
+const COL3 = [0x7b8794, 0x4ade80, 0xfbbf24, 0xef4444], CSS3 = ['#9aa5b1', '#4ade80', '#fbbf24', '#ef4444'];
 function makeLabel() {
   const c = document.createElement('canvas'); c.width = 320; c.height = 80;
   const tex = new THREE.CanvasTexture(c);
@@ -509,17 +794,13 @@ function setLabel(spr, text, color) {
   g.fillStyle = '#0b0d10'; g.font = '700 34px -apple-system,"Noto Sans KR",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
   g.fillText(text, 160, 41); u.tex.needsUpdate = true;
 }
-function bodyGeo(cls) {
-  const P = PRI[cls];
-  if (cls === 'person') return new THREE.CapsuleGeometry(0.25, 1.2, 4, 12);
-  return new THREE.BoxGeometry(P.w, P.h, P.len);
-}
+function bodyGeo(cls) { const P = PRI[cls]; return cls === 'person' ? new THREE.CapsuleGeometry(0.25, 1.2, 4, 12) : new THREE.BoxGeometry(P.w, P.h, P.len); }
 function getMesh(tr) {
   let o = meshes.get(tr.id);
   if (o && o.cls !== tr.cls) { removeMesh(tr.id); o = null; }
   if (o) return o;
   const grp = new THREE.Group(), P = PRI[tr.cls];
-  const mat = new THREE.MeshStandardMaterial({ color: COL3[0], roughness: 0.55, emissive: 0x000000 });
+  const mat = new THREE.MeshStandardMaterial({ color: COL3[0], roughness: 0.55, emissive: 0x000000, transparent: true });
   const body = new THREE.Mesh(bodyGeo(tr.cls), mat);
   body.position.set(0, tr.cls === 'person' ? 0.85 : P.h / 2, -P.len / 2); grp.add(body);
   const label = makeLabel(); label.position.set(0, P.h + 1.2, -P.len / 2); grp.add(label);
@@ -535,29 +816,35 @@ $('#viewBtn').onclick = () => { view = view === 'chase' ? 'top' : 'chase'; $('#v
 function render3D() {
   const wrap = $('#sceneWrap'), W = wrap.clientWidth, H = wrap.clientHeight;
   if (W && H && (glCv.width !== Math.round(W * renderer.getPixelRatio()) || glCv.height !== Math.round(H * renderer.getPixelRatio()))) { renderer.setSize(W, H, false); cam3.aspect = W / H; cam3.updateProjectionMatrix(); }
-  // 망원일 때는 더 멀리까지 보이도록 카메라를 끌어올림
   const tele = lens === 'tele', look = tele ? -50 : -22;
   if (view === 'chase') { cam3.up.set(0, 1, 0); cam3.position.lerp(new THREE.Vector3(0, tele ? 16 : 9, tele ? 14 : 11), 0.1); cam3.lookAt(0, 0, look); }
   else { cam3.up.set(0, 0, -1); cam3.position.lerp(new THREE.Vector3(0, tele ? 115 : 55, look - 2), 0.1); cam3.lookAt(0, 0, look - 2); }
 
-  // 내 차: 폰(원점) 앞으로 보닛, 뒤로 3m
-  const carLen = S.bonnet + 3; egoCar.scale.z = carLen; egoCar.position.set(0, 0.7, (3 - S.bonnet) / 2);
-  const v = ego() || 0, R = S.laneW / 2, far = tele ? 130 : 80;
-  lane.scale.set(S.laneW, far - S.bonnet, 1); lane.position.z = -(S.bonnet + far) / 2;
-  const e = edgeGeo.attributes.position;
-  e.setXYZ(0, -R, 0.03, -S.bonnet); e.setXYZ(1, -R, 0.03, -far); e.setXYZ(2, R, 0.03, -S.bonnet); e.setXYZ(3, R, 0.03, -far); e.needsUpdate = true;
-  const lv = alarmOn ? 2 : Math.max(0, ...tracks.map(t => t.inPath && t.hits >= 3 ? t.level : 0));
-  laneMat.color.setHex([0x38bdf8, 0xfbbf24, 0xef4444][lv]); edgeMat.color.setHex([0x38bdf8, 0xfbbf24, 0xef4444][lv]);
-  warnLine.visible = v > 1; warnLine.scale.x = S.laneW; warnLine.position.z = -(S.bonnet + v * S.warnT);
+  egoCar.scale.z = S.bonnet + 3; egoCar.position.set(0, 0.7, (3 - S.bonnet) / 2);
+  const far = farRange(), near = S.bonnet, cp = corrGeo.attributes.position;
+  for (let i = 0; i < NS; i++) {
+    const D = near + (far - near) * i / (NS - 1), [l, r] = laneEdges(D);
+    cp.setXYZ(i * 2, l, 0.02, -D); cp.setXYZ(i * 2 + 1, r, 0.02, -D);
+  }
+  cp.needsUpdate = true;
+  const lv = pathLevel(); corrMat.color.setHex([0x38bdf8, 0x38bdf8, 0xfbbf24, 0xef4444][lv]); corrMat.opacity = lv >= 2 ? 0.3 : 0.16;
+  [laneConf('L'), laneConf('R')].forEach((mdl, k) => {
+    const ln = lane3[k]; ln.visible = !!mdl; if (!mdl) return;
+    const a = ln.geometry.attributes.position, d0 = Math.max(near, mdl.dMin - 2), d1 = Math.min(far, mdl.dMax + 10);
+    for (let i = 0; i < NS; i++) { const D = d0 + (d1 - d0) * i / (NS - 1); a.setXYZ(i, evB(mdl, D), 0.05, -D); }
+    a.needsUpdate = true;
+  });
+  const v = ego() || 0, dB = brakeLineDist(), [bl, br] = laneEdges(dB);
+  brake3.visible = v > 3; brake3.scale.x = Math.max(0.5, br - bl); brake3.position.set((bl + br) / 2, 0.04, -dB);
 
   for (const tr of tracks) {
     const o = getMesh(tr), vis = tr.hits >= 3;
     o.grp.visible = o.path.visible = vis; if (!vis) continue;
     o.grp.position.set(tr.X, 0, -tr.Z);
     const c = COL3[tr.level];
-    o.mat.color.setHex(c); o.mat.emissive.setHex(tr.level === 2 ? 0x550000 : 0); o.path.material.color.setHex(c);
-    setLabel(o.label, `${PRI[tr.cls].name} ${tr.dist.toFixed(0)}m`, ['#4ade80', '#fbbf24', '#ef4444'][tr.level]);
-    // 3초 뒤 예상 위치 (내 차 기준 상대 경로)
+    o.mat.color.setHex(c); o.mat.opacity = tr.level === 0 ? 0.55 : 1; o.mat.emissive.setHex(tr.level === 3 ? 0x550000 : 0); o.path.material.color.setHex(c);
+    o.path.visible = tr.level >= 1;
+    setLabel(o.label, `${PRI[tr.cls].name} ${tr.dist.toFixed(0)}m`, CSS3[tr.level]);
     const a = o.path.geometry.attributes.position;
     a.setXYZ(0, tr.X, 0.1, -tr.Z); a.setXYZ(1, tr.X + tr.vX * 3, 0.1, -Math.max(0, tr.Z + tr.vZ * 3)); a.needsUpdate = true;
   }
@@ -619,7 +906,6 @@ function initWorker() {
   worker.postMessage({ type: 'load' });
 }
 function maybeSendDepth(now) {
-  // 충돌 감지가 우선: 감지 속도가 떨어지면 깊이 계산을 쉰다
   if (!S.env || !workerReady || workerBusy || now - lastSend < 350 || (detector && detFps > 0 && detFps < 10)) return;
   const vw = video.videoWidth, vh = video.videoHeight; if (!vw) return;
   const w = 256, h = Math.round(256 * vh / vw);
@@ -641,8 +927,7 @@ function onDepth(m) {
   const fr = sentFrame; if (!fr) return;
   const { W, H, data } = m;
   const med = sampleMedian(data, W, H, 0, 0, W, H); if (!med) return;
-  if (depthK == null) depthK = 12 * med; // 첫 프레임: 도로 장면 중앙값 ≈ 12m 가정
-  // 상대 역깊이 → 미터 (Z = K / d). 추적 중인 물체의 기하 거리로 K를 계속 보정
+  if (depthK == null) depthK = 12 * med;
   for (const tr of tracks) {
     if (tr.hits < 5 || tr.Z > 40) continue;
     const s = W / fr.vw, b = tr.bb;
@@ -668,10 +953,7 @@ function onDepth(m) {
   cloudGeo.setDrawRange(0, n);
   cloudGeo.attributes.position.needsUpdate = true; cloudGeo.attributes.color.needsUpdate = true;
 }
-function onEnvToggle() {
-  cloud.visible = S.env;
-  if (S.env && !worker && running) initWorker();
-}
+function onEnvToggle() { cloud.visible = S.env; if (S.env && !worker && running) initWorker(); }
 cloud.visible = S.env;
 
 /* ───────── 물체 감지기 ───────── */
@@ -685,21 +967,21 @@ async function initDetector() {
   let delegate = 'GPU';
   try { detector = await ObjectDetector.createFromOptions(vision, opts('GPU')); }
   catch (e) { delegate = 'CPU'; detector = await ObjectDetector.createFromOptions(vision, opts('CPU')); }
-  // 원거리 확대 영역 전용 (이미지 모드)
   try { detectorImg = await ObjectDetector.createFromOptions(vision, { ...opts(delegate), runningMode: 'IMAGE', scoreThreshold: 0.4 }); }
   catch (e) { detectorImg = null; }
 }
 
-/* ───────── 원거리 확대 감지 ─────────
-   영상을 통째로 줄이면 먼 물체가 몇 px로 뭉개진다.
-   수평선 주변(먼 물체가 있는 곳)을 원본 해상도로 잘라 한 번 더 감지한다. */
+/* ───────── 원거리 확대 감지 ───────── */
 const cropCv = document.createElement('canvas'), cropCtx = cropCv.getContext('2d');
 let cropRect = null, cropTurn = false;
 function cropRegion(vw, vh, f) {
-  const swTele = lens === 'tele' && hwZoom < 1.5;      // 하드웨어 줌이 없으면 더 좁게 잘라 대신함
+  const swTele = lens === 'tele' && hwZoom < 1.5;
   const side = Math.round(Math.min(vw, vh) * (swTele ? 0.34 : 0.6));
   const yh = sens.ok ? vh / 2 - f * Math.tan(sens.pitch) : vh / 2;
-  return { x: Math.round(vw / 2 - side / 2), y: Math.round(clamp(yh - side * 0.45, 0, vh - side)), s: side };
+  // 진로가 휘어 있으면 확대 영역도 그쪽으로 (40m 지점 진로 중심)
+  const [l, r] = laneEdges(40), Zc = 40 * Math.cos(sens.pitch);
+  const xc = clamp(vw / 2 + f * ((l + r) / 2) / Zc, side / 2, vw - side / 2);
+  return { x: Math.round(xc - side / 2), y: Math.round(clamp(yh - side * 0.45, 0, vh - side)), s: side };
 }
 function detectCrop(vw, vh, f) {
   const r = cropRegion(vw, vh, f); cropRect = r;
@@ -710,7 +992,6 @@ function detectCrop(vw, vh, f) {
   for (const d of res.detections) {
     const b = d.boundingBox, cls = d.categories && d.categories[0] && d.categories[0].categoryName;
     if (!b || !PRI[cls]) continue;
-    // 확대 영역 가장자리에 잘린 물체는 전체 감지에 맡김
     if (b.originX < 2 || b.originY < 2 || b.originX + b.width > r.s - 2 || b.originY + b.height > r.s - 2) continue;
     out.push({ x: b.originX + r.x, y: b.originY + r.y, w: b.width, h: b.height, cls });
   }
@@ -725,7 +1006,6 @@ function iou(a, b) {
 async function openCamera() {
   const base = { width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } };
   const v = S.camId ? { ...base, deviceId: { exact: S.camId } } : { ...base, facingMode: { ideal: 'environment' } };
-  // zoom:true 를 요청해야 크롬이 하드웨어 줌(렌즈 전환) 제어를 허용
   try { stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { ...v, zoom: true } }); }
   catch (e) { stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: v }); }
   vtrack = stream.getVideoTracks()[0];
@@ -744,7 +1024,7 @@ async function applyZoom(z) {
 }
 function resetScene() {
   tracks.forEach(tr => removeMesh(tr.id)); tracks.length = 0;
-  depthK = null; cloudGeo.setDrawRange(0, 0);
+  LANE.L = LANE.R = null; depthK = null; cloudGeo.setDrawRange(0, 0);
 }
 let toastT = 0;
 function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 1600); }
@@ -752,7 +1032,7 @@ async function setLens(l) {
   if (l === lens || lensBusy) return;
   lensBusy = true; lens = l; lensHi = lensLo = 0;
   await applyZoom(l === 'tele' ? S.teleZoom : 1);
-  resetScene();   // 화각이 바뀌면 화면 좌표가 달라지므로 추적을 새로 시작
+  resetScene();
   lensBusy = false;
   toast(l === 'tele' ? `망원 ${hwZoom > 1.4 ? hwZoom.toFixed(1) + '×' : '(중앙 확대)'} · 원거리 감시` : '광각 1× · 주변 감시');
 }
@@ -763,7 +1043,6 @@ $('#lensBtn').onclick = () => {
   $('#lensBtn').textContent = lensLabel(S.lensMode);
   if (running && S.lensMode !== 'auto') setLens(S.lensMode);
 };
-// 렌즈 '자동': 빠르면 먼 곳(망원), 느리면 주변(광각)
 function autoLens() {
   if (S.lensMode !== 'auto' || lensBusy || alarmOn) return;
   const kmh = (ego() || 0) * 3.6;
@@ -806,7 +1085,6 @@ function loop() {
         if (!b || !PRI[cls] || b.width < 6 || b.height < 6) continue;
         raw.push({ x: b.originX, y: b.originY, w: b.width, h: b.height, cls });
       }
-      // 한 프레임 걸러 원거리 확대 감지 → 같은 물체면 더 정밀한 쪽(작은 물체는 확대 결과)으로 합침
       cropTurn = !cropTurn;
       if (cropTurn && detectorImg) {
         for (const c of detectCrop(vw, vh, f)) {
@@ -819,6 +1097,7 @@ function loop() {
     }
     fpsN++; if (now - fpsT > 1000) { detFps = fpsN * 1000 / (now - fpsT); fpsN = 0; fpsT = now; }
   }
+  if (!lensBusy) detectLanes(now);
   for (const tr of tracks) assess(tr);
   updateAlarm(now);
   maybeSendDepth(now);
@@ -832,14 +1111,19 @@ function loop() {
     if (S.testSpd > 0) { gc.className = 'chip test'; gc.textContent = '테스트 속도'; }
     else if (v != null) { gc.className = 'chip ok'; gc.textContent = `GPS ±${Math.round(gps.acc || 0)}m`; }
     else { gc.className = 'chip bad'; gc.textContent = gps.err || 'GPS 찾는 중'; }
+    const nL = (laneConf('L') ? 1 : 0) + (laneConf('R') ? 1 : 0), lc = $('#laneChip');
+    lc.className = 'chip ' + (!S.laneOn ? 'none' : nL === 2 ? 'ok' : nL === 1 ? 'half' : 'none');
+    lc.textContent = !S.laneOn ? '차선 끔' : nL === 2 ? '차선 ✓' : nL === 1 ? '차선 한쪽' : '차선 —';
     autoLens();
     const lb = $('#lensBadge');
     lb.className = lens === 'tele' ? 'tele' : '';
     lb.textContent = lens === 'tele' ? (hwZoom > 1.4 ? `${hwZoom.toFixed(1)}× 망원` : '중앙 확대') : '1× 광각';
+    const [il, it] = infoText(), ib = $('#infoBar');
+    ib.className = il >= 2 ? 'l' + il : ''; ib.textContent = it;
     const parts = [];
-    parts.push(detector ? `감지 ${detFps.toFixed(0)}fps · ${tracks.filter(x => x.hits >= 3).length}개` : '감지 모델 준비 중…');
+    parts.push(detector ? `감지 ${detFps.toFixed(0)}fps` : '감지 모델 준비 중…');
     if (S.env) parts.push(modelMsg || (workerReady ? `깊이 ${depthDevice === 'webgpu' ? 'GPU' : 'CPU'} ${depthMs.toFixed(0)}ms` : ''));
-    parts.push(sens.ok ? `기울기 ${(sens.pitch / DEG).toFixed(1)}°` : '기울기 센서 없음');
+    parts.push(sens.ok ? `기울기 ${(sens.pitch / DEG).toFixed(1)}°` + (Math.abs(LANE.pitchAuto) > 0.05 * DEG ? ` (자동 ${(LANE.pitchAuto / DEG > 0 ? '+' : '') + (LANE.pitchAuto / DEG).toFixed(1)}°)` : '') : '기울기 센서 없음');
     status(parts.filter(Boolean).join(' · '));
   }
 }
@@ -852,8 +1136,7 @@ async function start() {
   const btn = $('#startBtn'); btn.disabled = true; btn.textContent = '권한 요청 중…';
   try { if (typeof DeviceMotionEvent !== 'undefined' && DeviceMotionEvent.requestPermission) await DeviceMotionEvent.requestPermission().catch(() => {}); } catch (e) {}
   try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); await audioCtx.resume(); } catch (e) {}
-  // 음성 엔진 깨우기 (사용자 탭 안에서 한 번 호출해야 이후 자동 재생 가능)
-  try { if (S.voice && 'speechSynthesis' in window) { const u = new SpeechSynthesisUtterance('안전 운전 보조를 시작합니다'); u.lang = 'ko-KR'; speechSynthesis.speak(u); } } catch (e) {}
+  try { if ((S.voice || S.infoVoice) && 'speechSynthesis' in window) { const u = new SpeechSynthesisUtterance('안전 운전 보조를 시작합니다'); u.lang = 'ko-KR'; speechSynthesis.speak(u); } } catch (e) {}
   lens = S.lensMode === 'tele' ? 'tele' : 'wide';
   try { await openCamera(); }
   catch (e) {
