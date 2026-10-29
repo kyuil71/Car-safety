@@ -369,19 +369,40 @@ function fitLanes(pts) {
   const b = fitLanesOnce(pts, 0);
   return (b.L ? 1 : 0) + (b.R ? 1 : 0) > (a.L ? 1 : 0) + (a.R ? 1 : 0) ? b : a;
 }
+// 한쪽 선을 알면, 반대쪽은 '그 선과 차선 폭(2.4~4.6m)만큼 떨어진 평행선'으로 찾는다 (점선·가려진 선에 강함)
+function acquireByOffset(pts, mo, dir) {
+  const bins = new Float32Array(23);
+  for (const q of pts) { if (q.D > 50) continue; const k = Math.floor(((q.X - evB(mo, q.D)) * dir - 2.4) / 0.1); if (k >= 0 && k < 23) bins[k]++; }
+  let best = -1, bv = 0;
+  for (let k = 0; k < 23; k++) { const s = bins[k] + 0.5 * ((k ? bins[k - 1] : 0) + (k < 22 ? bins[k + 1] : 0)); if (s > bv) { bv = s; best = k; } }
+  if (bv < 6) return null;
+  const off = 2.4 + (best + 0.5) * 0.1;
+  return pts.filter(q => Math.abs((q.X - evB(mo, q.D)) * dir - off) < 0.35 + 0.01 * q.D);
+}
 function fitLanesOnce(pts, shareIters) {
   let sL = selectSide(pts, LANE.L, -1), sR = selectSide(pts, LANE.R, 1), mL = null, mR = null;
   const ok = s => s && s.length >= 8 && (([a, b]) => b - a >= 5)(spanOf(s));
+  if (!ok(sL)) sL = null; if (!ok(sR)) sR = null;
+  if ((sL && !sR) || (sR && !sL)) {
+    const s = sL || sR, [d0, d1] = spanOf(s), m1 = fitJoint([s], d1 - d0 > 16 && s.length >= 24, true);
+    if (m1) { m1[0].dMax = d1; const got = acquireByOffset(pts, m1[0], sL ? 1 : -1); if (ok(got)) { if (sL) sR = got; else sL = got; } }
+  }
+  // 가까운 곳부터 먼 곳으로 범위를 넓혀 가며 맞춤 → 커브를 직선으로 굳히지 않음
+  const DLIM = [22, 32, 48, 75];
   for (let it = 0; it < 4; it++) {
+    // (가까운 점이 모자란 쪽 — 가려진 점선 등 — 은 범위를 줄이지 않음)
+    const lim = s => { if (!s) return s; const f = s.filter(q => q.D < DLIM[it]); return ok(f) ? f : s; };
+    sL = lim(sL); sR = lim(sR);
     if (!ok(sL)) sL = null; if (!ok(sR)) sR = null;
     if (!sL && !sR) return { L: null, R: null };
     const sides = [sL, sR].filter(Boolean), all = sides.flat(), [d0, d1] = spanOf(all);
-    const ms = fitJoint(sides, d1 - d0 > 16 && all.length >= 24, it < shareIters); if (!ms) return { L: null, R: null };
+    const ms = fitJoint(sides, d1 - d0 > 12 && all.length >= 16, it < shareIters); if (!ms) return { L: null, R: null };
     let k = 0; mL = sL ? ms[k++] : null; mR = sR ? ms[k++] : null;
     for (const [m, s] of [[mL, sL], [mR, sR]]) if (m) { [m.dMin, m.dMax] = spanOf(s); m.n = s.length; }
     if (mL) sL = pts.filter(q => Math.abs(q.X - evB(mL, q.D)) < 0.25 + 0.008 * q.D);
     if (mR) sR = pts.filter(q => Math.abs(q.X - evB(mR, q.D)) < 0.25 + 0.008 * q.D);
   }
+  const selL = sL, selR = sR;   // 소실점 계산용 (검증 전 원래 후보)
   const valid = (m, side) => m && Math.abs(m.b) <= 0.25 && Math.abs(m.c) <= 0.006 && m.a * side >= 0.3 && m.a * side <= 3.6;
   if (!valid(mL, -1)) mL = null; if (!valid(mR, 1)) mR = null;
   if (mL && mR) { const w = mR.a - mL.a; if (w < 2.4 || w > 4.6 || Math.abs(mR.b - mL.b) > 0.1) { if (mL.n < mR.n) mL = null; else mR = null; } }
@@ -395,11 +416,51 @@ function fitLanesOnce(pts, shareIters) {
       if (fl && fr) slope = fr.b - fl.b;
     }
   }
-  return { L: mL, R: mR, slope };
+  return { L: mL, R: mR, slope, selL, selR };
+}
+// 소실점: 영상 좌표(u,v)만으로 '왼쪽으로 기운 직선'과 '오른쪽으로 기운 직선'을 찾아(RANSAC) 만나는 높이를 구함.
+// 노면 거리 계산(=센서 기울기)에 의존하지 않으므로 기울기가 크게 틀려도 동작. 어떤 차선 쌍이든 같은 점으로 모인다.
+function vanishRow(pts, imgW) {
+  const P = pts.filter(q => q.u != null); if (P.length < 24) return null;
+  let seed = 12345; const rnd = n => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) % n;
+  const tol = Math.max(3, imgW * 0.006);
+  // u = m·v + k 꼴 직선. avoidM이 있으면 그 기울기와 충분히 다른 선만
+  const line = (Q, avoidM) => {
+    let best = null, bn = 0;
+    for (let i = 0; i < 200; i++) {
+      const a = Q[rnd(Q.length)], b = Q[rnd(Q.length)]; if (Math.abs(a.v - b.v) < 6) continue;
+      const m = (a.u - b.u) / (a.v - b.v); if (Math.abs(m) < 0.2 || Math.abs(m) > 8) continue;
+      if (avoidM != null && Math.abs(m - avoidM) < 0.25) continue;
+      const k = a.u - m * a.v; let n = 0; for (const q of Q) if (Math.abs(q.u - m * q.v - k) < tol) n++;
+      if (n > bn) { bn = n; best = { m, k }; }
+    }
+    if (!best || bn < 10) return null;
+    const inl = Q.filter(q => Math.abs(q.u - best.m * q.v - best.k) < tol);
+    let n = 0, sv = 0, su = 0, svv = 0, svu = 0;
+    for (const q of inl) { n++; sv += q.v; su += q.u; svv += q.v * q.v; svu += q.v * q.u; }
+    const den = n * svv - sv * sv; if (Math.abs(den) < 1e-6) return null;
+    const m = (n * svu - sv * su) / den, k = (su - m * sv) / n;
+    return { m, k, rest: Q.filter(q => Math.abs(q.u - m * q.v - k) >= tol * 1.5) };
+  };
+  // 가장 뚜렷한 선 → 남은 점에서 기울기가 다른 두 번째 선 (평행한 차선은 어느 쌍이든 같은 소실점)
+  const a = line(P, null); if (!a) return null;
+  const b = line(a.rest, a.m); if (!b) return null;
+  const vr = (a.k - b.k) / (b.m - a.m), ur = a.m * vr + a.k;
+  return ur > -imgW * 0.5 && ur < imgW * 1.5 ? vr : null;
 }
 function laneConf(k) { const m = LANE[k]; return m && m.conf >= 0.3 ? m : null; }
-function updateLanes(pts, now, v) {
+function updateLanes(pts, now, v, cam) {
   const fr = fitLanes(pts);
+  // 큰 기울기 오차는 소실점으로 먼저 크게 바로잡음 (작은 오차는 아래 평행성 보정이 담당)
+  // (주행 중엔 점선이 흘러가므로 최근 3프레임의 도색 점을 모아서 계산)
+  LANE.vpBuf = (LANE.vpBuf || []).concat([pts.filter(q => q.u != null)]).slice(-3);
+  if (cam && (v || 0) > 6) {
+    const vr = vanishRow(LANE.vpBuf.flat(), cam.w);
+    if (vr != null && vr > -cam.cy && vr < cam.cy * 2) {
+      const e = Math.atan((cam.cy - vr) / cam.f) - cam.pitch;
+      if (Math.abs(e) > 0.25 * DEG && Math.abs(e) < 10 * DEG) LANE.pitchAuto = clamp(LANE.pitchAuto + clamp(e * 0.15, -0.5 * DEG, 0.5 * DEG), -8 * DEG, 8 * DEG);
+    }
+  }
   for (const k of ['L', 'R']) {
     const f = fr[k], o = LANE[k];
     if (f) {
@@ -416,7 +477,7 @@ function updateLanes(pts, now, v) {
     // 평행한 두 선이 벌어지거나 모여 보이면 기울기 추정이 틀린 것 → 천천히 보정
     // (두 선 모두 안정적으로 추적된 뒤에만, 가까운 구간 직선 기울기 차이로, 작은 이득으로)
     if (fr.slope != null && L.conf >= 0.95 && R.conf >= 0.95 && Math.abs(L.c) < 0.004 && (v || 0) > 6)
-      LANE.pitchAuto = clamp(LANE.pitchAuto + 0.015 * clamp(fr.slope, -0.05, 0.05), -6 * DEG, 6 * DEG);
+      LANE.pitchAuto = clamp(LANE.pitchAuto + 0.015 * clamp(fr.slope, -0.05, 0.05), -8 * DEG, 8 * DEG);
   }
 }
 // 차선이 없을 때: 차의 회전(요레이트)으로 진로 곡률을 추정
@@ -502,36 +563,38 @@ function detectLanes(now) {
   const img = laneCtx.getImageData(0, y0, W, H - y0).data;
   // 차량 영역은 제외 (번호판·후미등 오검출 방지)
   const boxes = tracks.filter(t => t.hits >= 2 && PRI[t.cls].grp !== 'vru').map(t => [t.bb.x * sc, t.bb.y * sc, (t.bb.x + t.bb.w) * sc, (t.bb.y + t.bb.h) * sc]);
-  const I = new Float32Array(W), pts = [];
+  // 보닛이 가리는 가까운 노면은 제외 (보닛 끝 높이 약 0.85m 가정)
+  const dHood = clamp(S.bonnet * h / Math.max(0.25, h - 0.85), 3, 12);
+  const I = new Float32Array(W), G = new Float32Array(W), hist = new Uint16Array(64), pts = [];
   for (let y = y0, step = 1; y < H; y += step) {
     const ang = p + Math.atan((y - cy) / f); if (ang < 0.012) { step = 1; continue; }
     const D = h / Math.tan(ang);
     step = D < 12 ? 3 : D < 25 ? 2 : 1;    // 가까운 곳은 줄 간격이 촘촘하므로 건너뜀
-    if (D < 3 || D > 70) continue;
+    if (D < dHood || D > 70) continue;
     const Zc = D * Math.cos(p) + h * Math.sin(p);
-    const mw = 0.15 * f / Zc; if (mw < 0.8) continue;
-    const s = clamp(Math.round(mw) + 1, 2, 40), base = (y - y0) * W * 4;
-    let sum = 0;
-    for (let x = 0; x < W; x++) { const k = base + x * 4; const v = img[k] > img[k + 1] ? img[k] : img[k + 1]; I[x] = v; sum += v; }
-    const mean = sum / W;
-    let run0 = -1;
-    for (let x = s; x <= W - s; x++) {
-      let hit = false;
-      if (x < W - s) {
-        const l = I[x - s], r = I[x + s], c = I[x];
-        hit = 2 * c - l - r - Math.abs(l - r) > 36 && c > mean + 22;
-      }
-      if (hit && run0 < 0) run0 = x;
-      else if (!hit && run0 >= 0) {
-        const len = x - run0, xc = (run0 + x - 1) / 2;
-        if (len <= 3 * mw + 3 && !boxes.some(b => xc > b[0] && xc < b[2] && y > b[1] && y < b[3]))
-          pts.push({ X: (xc - cx) * Zc / f, D });
-        run0 = -1;
-      }
+    const mw = 0.15 * f / Zc; if (mw < 0.7) continue;
+    // 기울기 오차·카메라 흐림을 감안해 예상 폭의 0.4~2.6배까지 허용
+    const wMin = Math.max(1, mw * 0.4), wMax = mw * 2.6 + 2, base = (y - y0) * W * 4;
+    hist.fill(0);
+    for (let x = 0; x < W; x++) { const k = base + x * 4; const v = img[k] > img[k + 1] ? img[k] : img[k + 1]; I[x] = v; hist[v >> 2]++; }
+    let acc = 0, med = 0; for (let b = 0; b < 64; b++) { acc += hist[b]; if (acc >= W / 2) { med = b * 4 + 2; break; } }
+    let gs = 0; for (let x = 1; x < W - 1; x++) { G[x] = I[x + 1] - I[x - 1]; gs += Math.abs(G[x]); }
+    const noise = gs / (W - 2);                       // 이 줄의 노면 질감(잡음) 크기
+    const T = Math.max(8, 2.5 * noise), T2 = Math.max(12, 3 * noise);
+    for (let x = 2; x < W - 3; x++) {
+      if (!(G[x] > T && G[x] >= G[x - 1] && G[x] >= G[x + 1])) continue;       // 밝아지는 경계
+      let xf = -1, gmin = -T;
+      const x1 = Math.min(W - 2, Math.ceil(x + wMax));
+      for (let j = Math.ceil(x + wMin); j <= x1; j++) if (G[j] < gmin) { gmin = G[j]; xf = j; }   // 짝이 되는 어두워지는 경계
+      if (xf < 0) continue;
+      const xc = (x + xf) / 2, ic = I[Math.round(xc)], side = Math.max(I[Math.max(0, x - 2)], I[Math.min(W - 1, xf + 2)]);
+      if (ic > med + T2 && ic - side > T && !boxes.some(b => xc > b[0] && xc < b[2] && y > b[1] && y < b[3]))
+        pts.push({ X: (xc - cx) * Zc / f, D, u: xc / sc, v: y / sc });
+      x = xf;
     }
   }
   lanePts = pts;
-  updateLanes(pts, now, ego());
+  updateLanes(pts, now, ego(), { f: f / sc, cy: vh / 2, w: vw, pitch: p });
 }
 
 /* ───────── 추적 (알파-베타 필터 + 크기 변화율) ───────── */
@@ -713,6 +776,25 @@ function drawOverlay() {
         stroke(line(D => evB(mdl, D) + sgn * LANE.width, Math.max(near, mdl.dMin - 2), Math.min(far, mdl.dMax + 10), 16)); octx.setLineDash([]);
       }
     }
+    // 인식된 차선 도색 점 (무엇을 차선으로 보고 있는지 확인용)
+    octx.fillStyle = 'rgba(74,222,128,.8)';
+    const stepP = Math.max(1, Math.floor(lanePts.length / 400));
+    for (let i = 0; i < lanePts.length; i += stepP) { const q = lanePts[i], [x, y] = P(q.u, q.v); octx.fillRect(x - 1.5, y - 1.5, 3, 3); }
+    // 내 진행 방향: 진로 중심선 + 화살표 (차선을 따라 휨)
+    const mid = d => { const [l, r] = laneEdges(d); return (l + r) / 2; };
+    octx.setLineDash([12, 10]); octx.lineWidth = 3; octx.strokeStyle = 'rgba(255,255,255,.85)';
+    stroke(line(mid, near, Math.min(far, 50), 24)); octx.setLineDash([]);
+    for (const D of [8, 16, 26, 38]) {
+      if (D < near + 1 || D > far) continue;
+      const a = proj(mid(D), D), b = proj(mid(D + 2), D + 2); if (!a || !b) continue;
+      const dx = b[0] - a[0], dy = b[1] - a[1], Ln = Math.hypot(dx, dy) || 1, ux = dx / Ln, uy = dy / Ln, nx = -uy, ny = ux;
+      const sz = clamp(260 / D, 6, 24);
+      octx.lineWidth = 3; octx.strokeStyle = 'rgba(255,255,255,.95)'; octx.beginPath();
+      octx.moveTo(a[0] - ux * sz * 0.4 + nx * sz * 0.6, a[1] - uy * sz * 0.4 + ny * sz * 0.6);
+      octx.lineTo(a[0] + ux * sz * 0.4, a[1] + uy * sz * 0.4);
+      octx.lineTo(a[0] - ux * sz * 0.4 - nx * sz * 0.6, a[1] - uy * sz * 0.4 - ny * sz * 0.6);
+      octx.stroke();
+    }
     // 제동 한계선: 여기 안에 '서 있는 물체'가 있으면 빨간 경고가 되는 거리
     const v = ego() || 0;
     if (v > 3) {
@@ -766,6 +848,7 @@ function mkLine(color, dashed) {
   const l = new THREE.Line(g, mt); l.frustumCulled = false; scene.add(l); return l;
 }
 const lane3 = [mkLine(0x4ade80, false), mkLine(0x4ade80, false)];
+const center3 = mkLine(0xffffff, false);   // 내 진행 방향 (진로 중심선)
 const brake3 = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.35), new THREE.MeshBasicMaterial({ color: 0xef4444, side: THREE.DoubleSide }));
 brake3.rotation.x = -Math.PI / 2; brake3.position.y = 0.04; scene.add(brake3);
 const egoCar = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.4, 1), new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.45 }));
@@ -827,6 +910,9 @@ function render3D() {
     cp.setXYZ(i * 2, l, 0.02, -D); cp.setXYZ(i * 2 + 1, r, 0.02, -D);
   }
   cp.needsUpdate = true;
+  const ca = center3.geometry.attributes.position;
+  for (let i = 0; i < NS; i++) { const D = near + (far - near) * i / (NS - 1), [l, r] = laneEdges(D); ca.setXYZ(i, (l + r) / 2, 0.06, -D); }
+  ca.needsUpdate = true;
   const lv = pathLevel(); corrMat.color.setHex([0x38bdf8, 0x38bdf8, 0xfbbf24, 0xef4444][lv]); corrMat.opacity = lv >= 2 ? 0.3 : 0.16;
   [laneConf('L'), laneConf('R')].forEach((mdl, k) => {
     const ln = lane3[k]; ln.visible = !!mdl; if (!mdl) return;
@@ -1024,7 +1110,7 @@ async function applyZoom(z) {
 }
 function resetScene() {
   tracks.forEach(tr => removeMesh(tr.id)); tracks.length = 0;
-  LANE.L = LANE.R = null; depthK = null; cloudGeo.setDrawRange(0, 0);
+  LANE.L = LANE.R = null; LANE.vpBuf = []; lanePts = []; depthK = null; cloudGeo.setDrawRange(0, 0);
 }
 let toastT = 0;
 function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 1600); }
@@ -1122,6 +1208,7 @@ function loop() {
     ib.className = il >= 2 ? 'l' + il : ''; ib.textContent = it;
     const parts = [];
     parts.push(detector ? `감지 ${detFps.toFixed(0)}fps` : '감지 모델 준비 중…');
+    parts.push('진로: ' + ['회전 추정', '차선(한쪽)', '차선'][laneEdges(20)[2]]);
     if (S.env) parts.push(modelMsg || (workerReady ? `깊이 ${depthDevice === 'webgpu' ? 'GPU' : 'CPU'} ${depthMs.toFixed(0)}ms` : ''));
     parts.push(sens.ok ? `기울기 ${(sens.pitch / DEG).toFixed(1)}°` + (Math.abs(LANE.pitchAuto) > 0.05 * DEG ? ` (자동 ${(LANE.pitchAuto / DEG > 0 ? '+' : '') + (LANE.pitchAuto / DEG).toFixed(1)}°)` : '') : '기울기 센서 없음');
     status(parts.filter(Boolean).join(' · '));
